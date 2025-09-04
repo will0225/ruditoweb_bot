@@ -1,131 +1,170 @@
 import os
-from dotenv import load_dotenv
-load_dotenv() 
-import json
-from aiogram import Bot, Dispatcher
-from aiogram.types import Message
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.filters.command import Command
+import asyncio
 from datetime import datetime
-from sequence import next_sequence
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import Message
+from aiogram.filters import Command
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
+
 from storage import upload_photo
-from utils import parse_price_field
-from sheets import write_row_to_sheet
+from sequence import next_sequence
 from ai_client import classify_item
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-WHITELIST = set(int(x.strip()) for x in os.getenv("TELEGRAM_WHITELIST","").split(",") if x.strip())
-UPLOAD_ROOT = os.getenv("UPLOAD_ROOT","/app/uploads")
+import gspread
+from google.oauth2.service_account import Credentials
 
-import asyncio
+# ---------------- CONFIG ----------------
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+UPLOAD_BUCKET = os.getenv("SUPABASE_BUCKET")
+UPLOAD_ROOT = "/uploads"  # Optional local path if needed
 
-bot = Bot(BOT_TOKEN)
-dp = Dispatcher()
-    
+GOOGLE_SA_FILE = os.getenv("GOOGLE_SA_JSON")
+SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
+
+CONTROLLED_LISTS = {
+    "type": ["Shoes", "Clothes", "Bags"],
+    "category": ["Men", "Women", "Kids"],
+    "color": ["Red", "Blue", "Green"],
+    "brand": ["Nike", "Adidas", "Puma"]
+}
+
+AUTHORIZED_USERS = [123456789]  # Telegram IDs
 
 
-@dp.message(Command(commands=["ping"]))
-async def ping_handler(message: Message):
-    await message.reply("pong")
-
-    
+# ---------------- FSM ----------------
 class NewItemStates(StatesGroup):
     waiting_photos = State()
     waiting_prices = State()
-    review = State()
 
-def user_ok(tg_user):
-    return tg_user in WHITELIST
 
+# ---------------- BOT & Dispatcher ----------------
+bot = Bot(token=TELEGRAM_TOKEN)
+dp = Dispatcher(storage=MemoryStorage())
+
+
+# ---------------- HELPERS ----------------
+def user_ok(user_id: int) -> bool:
+    return user_id in AUTHORIZED_USERS
+
+
+def parse_prices(text: str) -> tuple:
+    """
+    Parse price string like "750/1000" or "-25%"
+    Returns (full_price, discounted_price)
+    """
+    text = text.replace("€", "").strip()
+    if "/" in text:
+        discounted, full = text.split("/")
+        discounted, full = float(discounted), float(full)
+    else:
+        full, discounted = float(text), None
+    return full, discounted
+
+
+# ---------------- GOOGLE SHEETS ----------------
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+creds = Credentials.from_service_account_file(GOOGLE_SA_FILE, scopes=SCOPES)
+gc = gspread.authorize(creds)
+sheet = gc.open_by_key(SHEET_ID)
+worksheet = sheet.sheet1
+
+
+# ---------------- HANDLERS ----------------
 @dp.message(Command(commands=["new"]))
 async def cmd_new(message: Message, state: FSMContext):
-    print(message.from_user.id)
     if not user_ok(message.from_user.id):
         await message.reply("Unauthorized.")
         return
-    # create draft
+
     seq = next_sequence()
     item_id = f"{datetime.utcnow().year}-{seq:04d}"
+
     await state.update_data(item_id=item_id, photos=[], gender='M', needs_review=False)
     await state.set_state(NewItemStates.waiting_photos)
     await message.reply(f"Started new item. ID {item_id}. Send photos (first = main). When done send /prices.")
 
-@dp.message(lambda msg: msg.photo)
+
+@dp.message(NewItemStates.waiting_photos)
 async def handle_photo(message: Message, state: FSMContext):
-    if not user_ok(message.from_user.id): return
     data = await state.get_data()
-    if not data:
-        await message.reply("Send /new to start.")
+    if not message.photo:
+        await message.reply("Send a photo or /prices to continue.")
         return
-    photos = data.get("photos", [])
 
-    ph = message.photo[-1]
-    file = await bot.get_file(ph.file_id)
-    file_bytes = await bot.download_file(file.file_path)
+    photo = message.photo[-1]  # highest resolution
+    file_bytes = await photo.download(destination=bytes)
+    index = len(data["photos"]) + 1
 
-    # upload to Supabase
-    url = upload_photo(data["item_id"], file_bytes.read(), len(photos)+1)
+    # Upload to Supabase
+    url = upload_photo(data["item_id"], file_bytes, index)
+    photos = data["photos"]
     photos.append(url)
+
     await state.update_data(photos=photos)
-    await message.reply(f"Uploaded photo #{len(photos)}. /save when ready or send more.")
+    await message.reply(f"Photo #{index} uploaded. Total photos: {len(photos)}.")
 
-@dp.message(Command(commands=["prices"]))
-async def cmd_prices(message: Message, state: FSMContext):
-    await state.set_state(NewItemStates.waiting_prices)
-    await message.reply("Send price(s). Examples: `750`, `750/1000`, `-25%`, `€1000`")
 
-@dp.message(NewItemStates.waiting_prices)
-async def handle_price_text(message: Message, state: FSMContext):
-    text = message.text.strip()
+@dp.message(F.text.regexp(r"^\d+(\.\d+)?(/(\d+(\.\d+)?))?$"))
+async def handle_prices(message: Message, state: FSMContext):
     data = await state.get_data()
-    parsed = parse_price_field(text, context_full_price_cents=data.get('full_cents'))
-    # store cents and currency in data
-    await state.update_data(full_cents=parsed.get('full_cents'),
-                            discounted_cents=parsed.get('discounted_cents'),
-                            currency=parsed.get('currency'),
-                            needs_review=parsed.get('needs_review') or data.get('needs_review', False))
-    await state.set_state(NewItemStates.review)
-    await message.reply("Price recorded. /save to write to sheet or /edit price to change.")
+    full, discounted = parse_prices(message.text)
+    await state.update_data(full_price=full, discounted_price=discounted)
+    await state.set_state(None)  # leave FSM
+    await message.reply(f"Prices saved. Full: {full}, Discounted: {discounted}. Now use /save to finish.")
+
 
 @dp.message(Command(commands=["save"]))
 async def cmd_save(message: Message, state: FSMContext):
     data = await state.get_data()
-    if not data: 
-        await message.reply("No draft. Use /new.")
-        return
-    # build sheet row object with AI classification
-    photos = data.get('photos', [])
+    photos = data.get("photos", [])
     if not photos:
-        await message.reply("No photos found. Send a photo first.")
+        await message.reply("No photos uploaded.")
         return
-    # classify with AI (title, desc, type, category, color, brand, confidences)
-    print(photos)
-    ai_result = classify_item(photos[0])
-    # normalization logic here: set Needs Review if any controlled item is uncertain
-    row = {
-      'product_id': data['item_id'],
-      'main_photo': photos[0],
-      'additional_photos': ",".join(photos[1:]),
-      'title': ai_result.get('title',''),
-      'description': ai_result.get('description',''),
-      'type_l1': ai_result.get('type_l1',''),
-      'category_l2': ai_result.get('category_l2',''),
-      'color': ai_result.get('color',''),
-      'gender': data.get('gender','M'),
-      'brand': data.get('brand') or ai_result.get('brand',''),
-      'supplier': data.get('supplier',''),
-      'full_price': data.get('full_cents'),
-      'discounted_price': data.get('discounted_cents'),
-      'needs_review': data.get('needs_review') or ai_result.get('needs_review', False)
-    }
-    write_row_to_sheet(row)
-    await message.reply(f"Saved item {data['item_id']}. Main photo: {row['main_photo']}")
+
+    # AI Classification
+    ai_result, needs_review = classify_item(photos[0], CONTROLLED_LISTS)
+
+    # Prepare row
+    row = [
+        data["item_id"],
+        photos[0],
+        ",".join(photos[1:]),
+        ai_result["title"],
+        ai_result["description"],
+        ai_result["type"],
+        ai_result["category"],
+        ai_result["color"],
+        data.get("gender", "M"),
+        ai_result["brand"] or "",
+        "",  # Supplier/Warehouse placeholder
+        data.get("full_price"),
+        data.get("discounted_price"),
+        "TRUE" if needs_review else "FALSE"
+    ]
+
+    # Append to Google Sheet
+    worksheet.append_row(row)
+    await message.reply(f"Item {data['item_id']} saved to sheet.")
     await state.clear()
 
 
+@dp.message(Command(commands=["cancel"]))
+async def cmd_cancel(message: Message, state: FSMContext):
+    await state.clear()
+    await message.reply("Item creation cancelled.")
+
+
+@dp.message(Command(commands=["status"]))
+async def cmd_status(message: Message, state: FSMContext):
+    data = await state.get_data()
+    await message.reply(f"Current data: {data}")
+
+
+# ---------------- MAIN ----------------
 if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.INFO)
-    # init_db()  # make sure database is initialized
+    print("Bot is running...")
     asyncio.run(dp.start_polling(bot))
