@@ -13,12 +13,12 @@ def classify_item(image_url: str, controlled_lists: dict):
     prompt = (
         "You are a product classification AI.\n"
         "Look at the photo and suggest:\n"
-        "- Title\n"
-        "- Description\n"
-        "- Type (must match one of: {types})\n"
-        "- Category (must match one of: {categories})\n"
-        "- Color (must match one of: {colors})\n"
-        "- Brand (must match one of: {brands}) if you are confident, else leave empty.\n\n"
+        "- title\n"
+        "- description\n"
+        "- type (must match one of: {types})\n"
+        "- category (must match one of: {categories})\n"
+        "- color (must match one of: {colors})\n"
+        "- brand (must match one of: {brands}) if you are confident, else leave empty.\n\n"
         "If you are not confident about Type/Category/Color, leave them empty."
     ).format(
         types=", ".join(controlled_lists.get("type", [])),

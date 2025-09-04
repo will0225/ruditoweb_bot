@@ -150,7 +150,7 @@ async def cmd_save(message: Message, state: FSMContext):
     ]
 
     worksheet.append_row(row, value_input_option='USER_ENTERED')  # ensure it writes to proper columns
-    await message.reply(f"✅ Item {data['item_id']} saved successfully.")
+    await message.reply(f"✅ Item {data['item_id']} saved successfully." f"Main Photo URL: {photos[0]}")
     await state.clear()
 
 
