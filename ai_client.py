@@ -34,9 +34,15 @@ def classify_item(image_url: str, controlled_lists: dict):
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are an expert product classifier."},
-            {"role": "user", "content": prompt},
-        ],
-        input=[{"type": "image_url", "image_url": image_url}]
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": { "url": image_url }
+                     }  # Correct type: string
+                ],
+            },
+        ]
     )
 
     # Parse JSON safely
