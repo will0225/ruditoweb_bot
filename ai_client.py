@@ -1,7 +1,7 @@
 import os
 from openai import OpenAI
+import json
 
-# Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def classify_item(image_url: str, controlled_lists: dict):
@@ -9,17 +9,20 @@ def classify_item(image_url: str, controlled_lists: dict):
     Classify a product from an image using GPT-4o-mini (vision).
     Returns a tuple: (ai_result: dict, needs_review: bool)
     """
-    # Build prompt
+
+    # Structured prompt requesting JSON
     prompt = (
         "You are a product classification AI.\n"
-        "Look at the photo and suggest:\n"
+        "Analyze the product photo at the given URL and respond **ONLY** in JSON with the keys:\n"
         "- title\n"
         "- description\n"
         "- type (must match one of: {types})\n"
         "- category (must match one of: {categories})\n"
         "- color (must match one of: {colors})\n"
-        "- brand (must match one of: {brands}) if you are confident, else leave empty.\n\n"
-        "If you are not confident about Type/Category/Color, leave them empty."
+        "- brand (must match one of: {brands}) or empty string if unsure\n"
+        "If Type/Category/Color does not match controlled lists, leave them empty.\n"
+        "Example output:\n"
+        '{{"title": "...", "description": "...", "type": "...", "category": "...", "color": "...", "brand": "..."}}'
     ).format(
         types=", ".join(controlled_lists.get("type", [])),
         categories=", ".join(controlled_lists.get("category", [])),
@@ -27,59 +30,39 @@ def classify_item(image_url: str, controlled_lists: dict):
         brands=", ".join(controlled_lists.get("brand", [])),
     )
 
-    # Send request to OpenAI Vision API
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are an expert product classifier."},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {"type": "image_url", "image_url": { "url": image_url }
-                     }  # Correct type: string
-                ],
-            },
+            {"role": "user", "content": prompt},
         ],
+        input=[{"type": "image_url", "image_url": image_url}]
     )
 
-    text = response.choices[0].message.content.strip()
-    print(text)
-    # Initialize result dictionary
-    ai_result = {
-        "title": "",
-        "description": "",
-        "type": "",
-        "category": "",
-        "color": "",
-        "brand": ""
-    }
+    # Parse JSON safely
+    try:
+        text = response.choices[0].message.content.strip()
+        ai_result = json.loads(text)
+    except Exception as e:
+        print("AI classification error:", e)
+        ai_result = {
+            "title": "",
+            "description": "",
+            "type": "",
+            "category": "",
+            "color": "",
+            "brand": ""
+        }
 
-    # Simple line-by-line parsing
-    for line in text.split("\n"):
-        line = line.strip()
-        if line.lower().startswith("title"):
-            ai_result["title"] = line.split(":", 1)[-1].strip()
-        elif line.lower().startswith("description"):
-            ai_result["description"] = line.split(":", 1)[-1].strip()
-        elif line.lower().startswith("type"):
-            value = line.split(":", 1)[-1].strip()
-            ai_result["type"] = value if value in controlled_lists.get("type", []) else ""
-        elif line.lower().startswith("category"):
-            value = line.split(":", 1)[-1].strip()
-            ai_result["category"] = value if value in controlled_lists.get("category", []) else ""
-        elif line.lower().startswith("color"):
-            value = line.split(":", 1)[-1].strip()
-            ai_result["color"] = value if value in controlled_lists.get("color", []) else ""
-        elif line.lower().startswith("brand"):
-            value = line.split(":", 1)[-1].strip()
-            ai_result["brand"] = value if value in controlled_lists.get("brand", []) else ""
+    # Ensure only valid values from controlled lists
+    for key in ["type", "category", "color", "brand"]:
+        if key in controlled_lists and ai_result.get(key) not in controlled_lists.get(key, []):
+            ai_result[key] = ""
 
-    # Needs review if any key fields are missing
     needs_review = any([
-        not ai_result["type"],
-        not ai_result["category"],
-        not ai_result["color"],
+        not ai_result.get("type"),
+        not ai_result.get("category"),
+        not ai_result.get("color")
     ])
 
     return ai_result, needs_review
