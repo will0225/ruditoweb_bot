@@ -11,21 +11,20 @@ def classify_item(image_url: str, controlled_lists: dict):
     Returns a tuple: (ai_result: dict, needs_review: bool)
     """
     # Prompt for structured JSON output
-    prompt = f"""
-You are an expert product classifier. Look at the product image and respond **ONLY in JSON** with the following keys:
-- title
-- description
-- type
-- category
-- color
-- brand
-
-Fill in the fields with your best guess. 
-- title and description must always be filled.
-- If unsure about brand, leave it empty.
-- For type, category, and color, provide your best guess; normalization will be applied later.
-- Do NOT include extra text or explanations.
-"""
+    prompt = (
+        "You are an expert product classifier. Look at the product image and respond ONLY in JSON with the following keys:\n"
+        "- title\n"
+        "- description\n"
+        "- type\n"
+        "- category\n"
+        "- color\n"
+        "- brand\n\n"
+        "Fill in the fields with your best guess.\n"
+        "- title and description must always be filled.\n"
+        "- If unsure about brand, leave it empty.\n"
+        "- For type, category, and color, provide your best guess; normalization will be applied later.\n"
+        "- Do NOT include extra text or explanations."
+    )
 
     # Call OpenAI Vision API
     response = client.chat.completions.create(
