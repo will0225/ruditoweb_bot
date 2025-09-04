@@ -1,0 +1,14 @@
+aiogram==3.0.0b6   # if you want aiogram 3 -- OR use python-telegram-bot
+google-api-python-client
+google-auth
+google-auth-httplib2
+gspread
+pillow
+python-multipart
+python-dotenv
+rapidfuzz
+pytesseract
+numpy
+opencv-python-headless
+requests
+supabase
