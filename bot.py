@@ -88,7 +88,7 @@ async def cmd_new(message: Message, state: FSMContext):
     await message.reply(f"Started new item. ID {item_id}. Send photos (first = main). When done send /prices.")
 
 
-@dp.message(NewItemStates.waiting_photos)
+@dp.message(NewItemStates.waiting_photos, F.photo)
 async def handle_photo(message: Message, state: FSMContext):
     data = await state.get_data()
     photos = data.get("photos", [])
