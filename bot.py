@@ -116,19 +116,8 @@ async def cmd_prices(message: Message, state: FSMContext):
     await message.reply("💰 Send prices in format: `750/1000`, `750`, or `-25%`", parse_mode="Markdown")
 
 
-# --- Handle prices ---
-@dp.message(NewItemStates.waiting_prices)
-async def handle_prices(message: Message, state: FSMContext):
-    data = await state.get_data()
-    prices = data.get("prices", [])
 
-    text = message.text.strip()
-    prices.append(text)
-    await state.update_data(prices=prices)
-
-    await message.reply("✅ Price recorded. Send more or /save to finish.")
-
-
+# --- Handle /save first (must be ABOVE handle_prices) ---
 @dp.message(NewItemStates.waiting_prices, Command("save"))
 async def cmd_save(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -139,6 +128,15 @@ async def cmd_save(message: Message, state: FSMContext):
 
     # AI Classification
     ai_result, needs_review = classify_item(photos[0], CONTROLLED_LISTS)
+
+    # Extract first/discounted prices if any
+    prices = data.get("prices", [])
+    full_price, discounted_price = (None, None)
+    if prices:
+        try:
+            full_price, discounted_price = parse_prices(prices[0])
+        except Exception:
+            pass
 
     # Prepare row
     row = [
@@ -153,17 +151,33 @@ async def cmd_save(message: Message, state: FSMContext):
         data.get("gender", "M"),
         ai_result["brand"] or "",
         "",  # Supplier/Warehouse placeholder
-        data.get("full_price"),
-        data.get("discounted_price"),
+        full_price,
+        discounted_price,
         "TRUE" if needs_review else "FALSE"
     ]
 
     # Append to Google Sheet
     worksheet.append_row(row)
-    await message.reply(f"Item {data['item_id']} saved to sheet.")
+    await message.reply(f"✅ Item {data['item_id']} saved to sheet.")
     await state.clear()
 
 
+# --- Handle regular price inputs ---
+@dp.message(NewItemStates.waiting_prices)
+async def handle_prices(message: Message, state: FSMContext):
+    text = message.text.strip()
+
+    # Skip commands so /save and /cancel work
+    if text.startswith("/"):
+        return
+
+    prices = (await state.get_data()).get("prices", [])
+    prices.append(text)
+    await state.update_data(prices=prices)
+
+    await message.reply("✅ Price recorded. Send more or /save to finish.")
+    
+    
 @dp.message(Command(commands=["cancel"]))
 async def cmd_cancel(message: Message, state: FSMContext):
     await state.clear()
