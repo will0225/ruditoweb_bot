@@ -20,8 +20,8 @@ from google.oauth2.service_account import Credentials
 # ---------------- CONFIG ----------------
 TELEGRAM_TOKEN = os.getenv("BOT_TOKEN")
 UPLOAD_BUCKET = os.getenv("SUPABASE_BUCKET")
-UPLOAD_ROOT = "/uploads"  # Optional local path if needed
-
+UPLOAD_ROOT = os.getenv("UPLOAD_ROOT") # Optional local path if needed
+BASE_URL = os.getenv("BASE_URL");
 GOOGLE_SA_FILE = os.getenv("GOOGLE_CREDENTIALS_JSON_PATH")
 SHEET_ID = os.getenv("SHEET_ID")
 
