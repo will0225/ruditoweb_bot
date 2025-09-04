@@ -44,7 +44,7 @@ Fill in the fields with your best guess.
 
     # Extract text
     text = response.choices[0].message.content.strip()
-    
+    print(text)
     # Try parsing JSON
     try:
         ai_result = json.loads(text)
