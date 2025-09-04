@@ -21,8 +21,8 @@ TELEGRAM_TOKEN = os.getenv("BOT_TOKEN")
 UPLOAD_BUCKET = os.getenv("SUPABASE_BUCKET")
 UPLOAD_ROOT = "/uploads"  # Optional local path if needed
 
-GOOGLE_SA_FILE = os.getenv("GOOGLE_SA_JSON")
-SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
+GOOGLE_SA_FILE = os.getenv("GOOGLE_CREDENTIALS_JSON_PATH")
+SHEET_ID = os.getenv("SHEET_ID")
 
 CONTROLLED_LISTS = {
     "type": ["Shoes", "Clothes", "Bags"],
