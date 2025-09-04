@@ -149,7 +149,7 @@ async def cmd_save(message: Message, state: FSMContext):
         "TRUE" if needs_review else "FALSE"  # N
     ]
 
-    worksheet.append_row(row, value_input_option='USER_ENTERED')  # ensure it writes to proper columns
+    worksheet.append_row(row, table_range="A:A", value_input_option='USER_ENTERED')  # ensure it writes to proper columns
     await message.reply(f"✅ Item {data['item_id']} saved successfully." f"Main Photo URL: {photos[0]}")
     await state.clear()
 
