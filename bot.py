@@ -129,7 +129,7 @@ async def handle_prices(message: Message, state: FSMContext):
     await message.reply("✅ Price recorded. Send more or /save to finish.")
 
 
-@dp.message(Command(commands=["save"]))
+@dp.message(NewItemStates.waiting_prices, Command("save"))
 async def cmd_save(message: Message, state: FSMContext):
     data = await state.get_data()
     photos = data.get("photos", [])
