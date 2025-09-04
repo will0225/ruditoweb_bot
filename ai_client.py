@@ -1,7 +1,8 @@
 import os
-from openai import OpenAI
 import json
+from openai import OpenAI
 
+# Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def classify_item(image_url: str, controlled_lists: dict):
@@ -9,49 +10,45 @@ def classify_item(image_url: str, controlled_lists: dict):
     Classify a product from an image using GPT-4o-mini (vision).
     Returns a tuple: (ai_result: dict, needs_review: bool)
     """
+    # Prompt for structured JSON output
+    prompt = f"""
+You are an expert product classifier. Look at the product image and respond **ONLY in JSON** with the following keys:
+- title
+- description
+- type
+- category
+- color
+- brand
 
-    # Structured prompt requesting JSON
-    prompt = (
-        "You are a product classification AI.\n"
-        "Analyze the product photo at the given URL and respond **ONLY** in JSON with the keys:\n"
-        "- title\n"
-        "- description\n"
-        "- type (must match one of: {types})\n"
-        "- category (must match one of: {categories})\n"
-        "- color (must match one of: {colors})\n"
-        "- brand (must match one of: {brands}) or empty string if unsure\n"
-        "If Type/Category/Color does not match controlled lists, leave them empty.\n"
-        "Example output:\n"
-        '{{"title": "...", "description": "...", "type": "...", "category": "...", "color": "...", "brand": "..."}}'
-    ).format(
-        types=", ".join(controlled_lists.get("type", [])),
-        categories=", ".join(controlled_lists.get("category", [])),
-        colors=", ".join(controlled_lists.get("color", [])),
-        brands=", ".join(controlled_lists.get("brand", [])),
-    )
-    
+Fill in the fields with your best guess. 
+- title and description must always be filled.
+- If unsure about brand, leave it empty.
+- For type, category, and color, provide your best guess; normalization will be applied later.
+- Do NOT include extra text or explanations.
+"""
+
+    # Call OpenAI Vision API
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are an expert product classifier."},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {"type": "image_url", "image_url": { "url": image_url }
-                    }  # Correct type: string
-                ],
-            },
-        ]
-    )
+    model="gpt-4o-mini",
+    messages=[
+        {"role": "system", "content": "You are a product classification AI."},
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": image_url}
+            ]
+        }
+    ]
+)
 
-    # Parse JSON safely
+    # Extract text
+    text = response.choices[0].message.content.strip()
+    
+    # Try parsing JSON
     try:
-        text = response.choices[0].message.content.strip()
-        print(text)
         ai_result = json.loads(text)
-    except Exception as e:
-        print("AI classification error:", e)
+    except Exception:
         ai_result = {
             "title": "",
             "description": "",
@@ -61,15 +58,20 @@ def classify_item(image_url: str, controlled_lists: dict):
             "brand": ""
         }
 
-    # Ensure only valid values from controlled lists
+    # Normalize type/category/color according to controlled lists
     for key in ["type", "category", "color", "brand"]:
-        if key in controlled_lists and ai_result.get(key) not in controlled_lists.get(key, []):
-            ai_result[key] = ""
+        if key in ["type", "category", "color", "brand"]:
+            value = ai_result.get(key, "").strip()
+            if key in controlled_lists:
+                ai_result[key] = value if value in controlled_lists[key] else ""
+            else:
+                ai_result[key] = value
 
+    # Determine if review is needed
     needs_review = any([
-        not ai_result.get("type"),
-        not ai_result.get("category"),
-        not ai_result.get("color")
+        not ai_result["type"],
+        not ai_result["category"],
+        not ai_result["color"],
     ])
 
     return ai_result, needs_review
