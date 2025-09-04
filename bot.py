@@ -1,4 +1,5 @@
 import os
+from io import BytesIO
 import asyncio
 from datetime import datetime
 from aiogram import Bot, Dispatcher, F
@@ -90,21 +91,22 @@ async def cmd_new(message: Message, state: FSMContext):
 @dp.message(NewItemStates.waiting_photos)
 async def handle_photo(message: Message, state: FSMContext):
     data = await state.get_data()
-    if not message.photo:
-        await message.reply("Send a photo or /prices to continue.")
-        return
+    photos = data.get("photos", [])
 
-    photo = message.photo[-1]  # highest resolution
-    file_bytes = await photo.download(destination=bytes)
-    index = len(data["photos"]) + 1
+    # download highest resolution
+    photo = message.photo[-1]
+    file = await bot.get_file(photo.file_id)
 
-    # Upload to Supabase
-    url = upload_photo(data["item_id"], file_bytes, index)
-    photos = data["photos"]
+    buf = BytesIO()
+    await bot.download(file, buf)
+    file_bytes = buf.getvalue()
+
+    # upload to Supabase
+    url = upload_photo(data["item_id"], file_bytes, len(photos)+1)
     photos.append(url)
 
     await state.update_data(photos=photos)
-    await message.reply(f"Photo #{index} uploaded. Total photos: {len(photos)}.")
+    await message.reply(f"📸 Photo {len(photos)} uploaded. Send more or /prices to continue.")
 
 
 @dp.message(F.text.regexp(r"^\d+(\.\d+)?(/(\d+(\.\d+)?))?$"))
