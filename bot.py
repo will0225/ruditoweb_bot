@@ -116,33 +116,33 @@ async def cmd_prices(message: Message, state: FSMContext):
     await message.reply("💰 Send prices in format: `750/1000`, `750`, or `-25%`", parse_mode="Markdown")
 
 
-
-# --- Handle /save first (must be ABOVE handle_prices) ---
 @dp.message(NewItemStates.waiting_prices, Command("save"))
 async def cmd_save(message: Message, state: FSMContext):
     data = await state.get_data()
     photos = data.get("photos", [])
+    prices = data.get("prices", [])
+
     if not photos:
         await message.reply("No photos uploaded.")
         return
+    if not prices:
+        await message.reply("No prices recorded.")
+        return
+
+    # Use first price for simplicity
+    try:
+        full_price, discounted_price = parse_prices(prices[0])
+    except Exception:
+        full_price, discounted_price = None, None
 
     # AI Classification
     ai_result, needs_review = classify_item(photos[0], CONTROLLED_LISTS)
 
-    # Extract first/discounted prices if any
-    prices = data.get("prices", [])
-    full_price, discounted_price = (None, None)
-    if prices:
-        try:
-            full_price, discounted_price = parse_prices(prices[0])
-        except Exception:
-            pass
-
-    # Prepare row
+    # Prepare row for Google Sheets
     row = [
-        data["item_id"],
-        photos[0],
-        ",".join(photos[1:]),
+        data["item_id"],                # Product ID
+        photos[0],                      # Main photo
+        ",".join(photos[1:]),           # Additional photos
         ai_result["title"],
         ai_result["description"],
         ai_result["type"],
@@ -156,10 +156,11 @@ async def cmd_save(message: Message, state: FSMContext):
         "TRUE" if needs_review else "FALSE"
     ]
 
-    # Append to Google Sheet
+    # Append to Google Sheet (ONE row per item)
     worksheet.append_row(row)
-    await message.reply(f"✅ Item {data['item_id']} saved to sheet.")
-    await state.clear()
+
+    await message.reply(f"✅ Item {data['item_id']} saved successfully.")
+    await state.clear()  # clear the FSM for next product
 
 
 # --- Handle regular price inputs ---
