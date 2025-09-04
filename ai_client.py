@@ -1,81 +1,84 @@
 import os
-from typing import Dict, Tuple
-import base64
 from openai import OpenAI
 
 # Initialize OpenAI client
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=OPENAI_API_KEY)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def classify_item(image_path: str, controlled_lists: Dict[str, list] = None) -> Tuple[dict, bool]:
+def classify_item(image_url: str, controlled_lists: dict):
     """
-    Classify a product image using AI and normalize results to controlled lists.
-
-    Args:
-        image_path (str): Path to the main image
-        controlled_lists (dict): {"type": [...], "category": [...], "color": [...], "brand": [...]}
-
-    Returns:
-        dict: {
-            "title": str,
-            "description": str,
-            "type": str,
-            "category": str,
-            "color": str,
-            "brand": str | None
-        }
-        bool: needs_review (True if AI output is uncertain or not in controlled lists)
+    Classify a product from an image using GPT-4o-mini (vision).
+    Returns a tuple: (ai_result: dict, needs_review: bool)
     """
-    controlled_lists = controlled_lists or {}
-    needs_review = False
+    # Build prompt
+    prompt = (
+        "You are a product classification AI.\n"
+        "Look at the photo and suggest:\n"
+        "- Title\n"
+        "- Description\n"
+        "- Type (must match one of: {types})\n"
+        "- Category (must match one of: {categories})\n"
+        "- Color (must match one of: {colors})\n"
+        "- Brand (must match one of: {brands}) if you are confident, else leave empty.\n\n"
+        "If you are not confident about Type/Category/Color, leave them empty."
+    ).format(
+        types=", ".join(controlled_lists.get("type", [])),
+        categories=", ".join(controlled_lists.get("category", [])),
+        colors=", ".join(controlled_lists.get("color", [])),
+        brands=", ".join(controlled_lists.get("brand", [])),
+    )
 
-    # Call OpenAI Vision / Image Classification
-    try:
-        response = client.responses.create(
-            model="gpt-4o-mini",
-            input=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "input_text", "text": "Extract title, description, type, category, color, brand."},
-                        {"type": "input_image", 
-                         "image_url": 
-                            {
-                                "url": image_path
-                            }
-                        }
-                    ]
-                }
-            ]
-        )
-        # Extract text output
-        text_output = response.output_text.strip()
-        # Here, implement your parsing logic
-        # Example: assume output is JSON string
-        import json
-        try:
-            result = json.loads(text_output)
-        except:
-            result = {}
+    # Send request to OpenAI Vision API
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are an expert product classifier."},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": prompt},
+                    {"type": "input_image", "image_url": image_url}  # Correct type: string
+                ],
+            },
+        ],
+    )
 
-    except Exception as e:
-        print("AI classification error:", e)
-        result = {}
+    text = response.choices[0].message.content.strip()
 
-    # Normalize to controlled lists
-    def normalize(field: str, controlled: list) -> str:
-        val = result.get(field, "").strip()
-        if controlled and val not in controlled:
-            nonlocal needs_review
-            needs_review = True
-            return ""
-        return val
+    # Initialize result dictionary
+    ai_result = {
+        "title": "",
+        "description": "",
+        "type": "",
+        "category": "",
+        "color": "",
+        "brand": ""
+    }
 
-    return {
-        "title": result.get("title", ""),
-        "description": result.get("description", ""),
-        "type": normalize("type", controlled_lists.get("type", [])),
-        "category": normalize("category", controlled_lists.get("category", [])),
-        "color": normalize("color", controlled_lists.get("color", [])),
-        "brand": normalize("brand", controlled_lists.get("brand", [])) or None
-    }, needs_review
+    # Simple line-by-line parsing
+    for line in text.split("\n"):
+        line = line.strip()
+        if line.lower().startswith("title"):
+            ai_result["title"] = line.split(":", 1)[-1].strip()
+        elif line.lower().startswith("description"):
+            ai_result["description"] = line.split(":", 1)[-1].strip()
+        elif line.lower().startswith("type"):
+            value = line.split(":", 1)[-1].strip()
+            ai_result["type"] = value if value in controlled_lists.get("type", []) else ""
+        elif line.lower().startswith("category"):
+            value = line.split(":", 1)[-1].strip()
+            ai_result["category"] = value if value in controlled_lists.get("category", []) else ""
+        elif line.lower().startswith("color"):
+            value = line.split(":", 1)[-1].strip()
+            ai_result["color"] = value if value in controlled_lists.get("color", []) else ""
+        elif line.lower().startswith("brand"):
+            value = line.split(":", 1)[-1].strip()
+            ai_result["brand"] = value if value in controlled_lists.get("brand", []) else ""
+
+    # Needs review if any key fields are missing
+    needs_review = any([
+        not ai_result["type"],
+        not ai_result["category"],
+        not ai_result["color"],
+    ])
+
+    return ai_result, needs_review
