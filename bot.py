@@ -31,7 +31,7 @@ CONTROLLED_LISTS = {
     "brand": ["Nike", "Adidas", "Puma"]
 }
 
-AUTHORIZED_USERS = [123456789]  # Telegram IDs
+AUTHORIZED_USERS = [8067976030]  # Telegram IDs
 
 
 # ---------------- FSM ----------------
