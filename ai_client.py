@@ -38,7 +38,7 @@ def classify_item(image_path: str, controlled_lists: Dict[str, list] = None) -> 
                     "role": "user",
                     "content": [
                         {"type": "input_text", "text": "Extract title, description, type, category, color, brand."},
-                        {"type": "image_url", 
+                        {"type": "input_image", 
                          "image_url": 
                             {
                                 "url": image_path
