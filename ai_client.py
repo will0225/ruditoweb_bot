@@ -12,18 +12,19 @@ def classify_item(image_url: str, controlled_lists: dict):
     """
     # Prompt for structured JSON output
     prompt = (
-        "You are an expert product classifier. Look at the product image and respond ONLY in JSON with the following keys:\n"
+        "You are an expert product classifier. Look at the product image and respond ONLY with a valid JSON object.\n\n"
+        "The JSON must have the following keys:\n"
         "- title\n"
         "- description\n"
         "- type\n"
         "- category\n"
         "- color\n"
         "- brand\n\n"
-        "Fill in the fields with your best guess.\n"
-        "- title and description must always be filled.\n"
-        "- If unsure about brand, leave it empty.\n"
-        "- For type, category, and color, provide your best guess; normalization will be applied later.\n"
-        "- Do NOT include extra text or explanations."
+        "Rules:\n"
+        "- Respond ONLY with JSON (no markdown, no code fences, no explanations).\n"
+        "- 'title' and 'description' must always be filled.\n"
+        "- If unsure about 'brand', leave it empty.\n"
+        "- For 'type', 'category', and 'color', provide your best guess (normalization will be applied later)."
     )
 
     # Call OpenAI Vision API
