@@ -29,10 +29,6 @@ def classify_item(image_path: str, controlled_lists: Dict[str, list] = None) -> 
     controlled_lists = controlled_lists or {}
     needs_review = False
 
-    # Read image as bytes
-    with open(image_path, "rb") as f:
-        image_bytes = f.read()
-
     # Call OpenAI Vision / Image Classification
     try:
         response = client.responses.create(
@@ -42,7 +38,12 @@ def classify_item(image_path: str, controlled_lists: Dict[str, list] = None) -> 
                     "role": "user",
                     "content": [
                         {"type": "input_text", "text": "Extract title, description, type, category, color, brand."},
-                        {"type": "input_image", "image_data": base64.b64encode(image_bytes).decode("utf-8")}
+                        {"type": "image_url", 
+                         "image_url": 
+                            {
+                                "url": image_path
+                            }
+                        }
                     ]
                 }
             ]
