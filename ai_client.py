@@ -32,7 +32,7 @@ def classify_item(image_path: str, controlled_lists: Dict[str, list] = None) -> 
     # Call OpenAI Vision / Image Classification
     try:
         response = client.responses.create(
-            model="gpt-4.1-mini",
+            model="gpt-4o-mini",
             input=[
                 {
                     "role": "user",
