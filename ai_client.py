@@ -36,7 +36,7 @@ Fill in the fields with your best guess.
             "role": "user",
             "content": [
                 {"type": "text", "text": prompt},
-                {"type": "image_url", "image_url": image_url}
+                {"type": "image_url", "image_url": { "url": image_url }}
             ]
         }
     ]
