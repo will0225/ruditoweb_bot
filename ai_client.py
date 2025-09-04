@@ -44,7 +44,7 @@ def classify_item(image_url: str, controlled_lists: dict):
     )
 
     text = response.choices[0].message.content.strip()
-
+    print(text)
     # Initialize result dictionary
     ai_result = {
         "title": "",
