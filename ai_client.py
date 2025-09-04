@@ -36,7 +36,8 @@ def classify_item(image_url: str, controlled_lists: dict):
                 "role": "user",
                 "content": [
                     {"type": "text", "text": prompt},
-                    {"type": "image_url", "image_url": image_url}  # Correct type: string
+                    {"type": "image_url", "image_url": { "url": image_url }
+                     }  # Correct type: string
                 ],
             },
         ],
