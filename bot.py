@@ -17,7 +17,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # ---------------- CONFIG ----------------
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_TOKEN = os.getenv("BOT_TOKEN")
 UPLOAD_BUCKET = os.getenv("SUPABASE_BUCKET")
 UPLOAD_ROOT = "/uploads"  # Optional local path if needed
 

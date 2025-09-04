@@ -12,3 +12,4 @@ numpy
 opencv-python-headless
 requests
 supabase
+openai
