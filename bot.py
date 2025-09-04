@@ -7,7 +7,8 @@ from aiogram.filters import Command
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-
+from dotenv import load_dotenv
+load_dotenv()  # will load variables from .env into environment
 from storage import upload_photo
 from sequence import next_sequence
 from ai_client import classify_item
