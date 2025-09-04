@@ -109,13 +109,24 @@ async def handle_photo(message: Message, state: FSMContext):
     await message.reply(f"📸 Photo {len(photos)} uploaded. Send more or /prices to continue.")
 
 
-@dp.message(F.text.regexp(r"^\d+(\.\d+)?(/(\d+(\.\d+)?))?$"))
+# --- Switch to price input ---
+@dp.message(NewItemStates.waiting_photos, Command("prices"))
+async def cmd_prices(message: Message, state: FSMContext):
+    await state.set_state(NewItemStates.waiting_prices)
+    await message.reply("💰 Send prices in format: `750/1000`, `750`, or `-25%`", parse_mode="Markdown")
+
+
+# --- Handle prices ---
+@dp.message(NewItemStates.waiting_prices)
 async def handle_prices(message: Message, state: FSMContext):
     data = await state.get_data()
-    full, discounted = parse_prices(message.text)
-    await state.update_data(full_price=full, discounted_price=discounted)
-    await state.set_state(None)  # leave FSM
-    await message.reply(f"Prices saved. Full: {full}, Discounted: {discounted}. Now use /save to finish.")
+    prices = data.get("prices", [])
+
+    text = message.text.strip()
+    prices.append(text)
+    await state.update_data(prices=prices)
+
+    await message.reply("✅ Price recorded. Send more or /save to finish.")
 
 
 @dp.message(Command(commands=["save"]))
