@@ -120,63 +120,51 @@ async def cmd_prices(message: Message, state: FSMContext):
 async def cmd_save(message: Message, state: FSMContext):
     data = await state.get_data()
     photos = data.get("photos", [])
-    prices = data.get("prices", [])
 
     if not photos:
         await message.reply("No photos uploaded.")
         return
-    if not prices:
-        await message.reply("No prices recorded.")
-        return
 
-    # Use first price for simplicity
-    try:
-        full_price, discounted_price = parse_prices(prices[0])
-    except Exception:
-        full_price, discounted_price = None, None
+    full_price = data.get("full_price")
+    discounted_price = data.get("discounted_price")
 
     # AI Classification
     ai_result, needs_review = classify_item(photos[0], CONTROLLED_LISTS)
-
-    # Prepare row for Google Sheets
+    print(ai_result)
+    # Prepare row
     row = [
-        data["item_id"],                # Product ID
-        photos[0],                      # Main photo
-        ",".join(photos[1:]),           # Additional photos
-        ai_result["title"],
-        ai_result["description"],
-        ai_result["type"],
-        ai_result["category"],
-        ai_result["color"],
-        data.get("gender", "M"),
-        ai_result["brand"] or "",
-        "",  # Supplier/Warehouse placeholder
-        full_price,
-        discounted_price,
-        "TRUE" if needs_review else "FALSE"
+        data["item_id"],                # A
+        photos[0],                      # B
+        ",".join(photos[1:]),           # C
+        ai_result["title"],             # D
+        ai_result["description"],       # E
+        ai_result["type"],              # F
+        ai_result["category"],          # G
+        ai_result["color"],             # H
+        data.get("gender", "M"),        # I
+        ai_result["brand"] or "",       # J
+        "",                              # K Supplier placeholder
+        full_price,                     # L
+        discounted_price,               # M
+        "TRUE" if needs_review else "FALSE"  # N
     ]
 
-    # Append to Google Sheet (ONE row per item)
-    worksheet.append_row(row)
-
+    worksheet.append_row(row, value_input_option='USER_ENTERED')  # ensure it writes to proper columns
     await message.reply(f"✅ Item {data['item_id']} saved successfully.")
-    await state.clear()  # clear the FSM for next product
+    await state.clear()
 
 
 # --- Handle regular price inputs ---
 @dp.message(NewItemStates.waiting_prices)
 async def handle_prices(message: Message, state: FSMContext):
     text = message.text.strip()
+    try:
+        full_price, discounted_price = parse_prices(text)
+    except Exception:
+        full_price, discounted_price = None, None
 
-    # Skip commands so /save and /cancel work
-    if text.startswith("/"):
-        return
-
-    prices = (await state.get_data()).get("prices", [])
-    prices.append(text)
-    await state.update_data(prices=prices)
-
-    await message.reply("✅ Price recorded. Send more or /save to finish.")
+    await state.update_data(full_price=full_price, discounted_price=discounted_price)
+    await message.reply(f"✅ Price recorded: Full={full_price}, Discounted={discounted_price}. Send more or /save to finish.")
     
     
 @dp.message(Command(commands=["cancel"]))
