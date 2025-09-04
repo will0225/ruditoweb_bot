@@ -48,6 +48,7 @@ def classify_item(image_url: str, controlled_lists: dict):
     # Parse JSON safely
     try:
         text = response.choices[0].message.content.strip()
+        print(text)
         ai_result = json.loads(text)
     except Exception as e:
         print("AI classification error:", e)
