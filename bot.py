@@ -76,9 +76,9 @@ worksheet = sheet.sheet1
 # ---------------- HANDLERS ----------------
 @dp.message(Command(commands=["new"]))
 async def cmd_new(message: Message, state: FSMContext):
-    if not user_ok(message.from_user.id):
-        await message.reply("Unauthorized.")
-        return
+    # if not user_ok(message.from_user.id):
+    #     await message.reply("Unauthorized.")
+    #     return
 
     seq = next_sequence()
     item_id = f"{datetime.utcnow().year}-{seq:04d}"

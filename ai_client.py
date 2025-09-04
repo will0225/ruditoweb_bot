@@ -29,7 +29,7 @@ def classify_item(image_url: str, controlled_lists: dict):
         colors=", ".join(controlled_lists.get("color", [])),
         brands=", ".join(controlled_lists.get("brand", [])),
     )
-
+    
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -39,7 +39,7 @@ def classify_item(image_url: str, controlled_lists: dict):
                 "content": [
                     {"type": "text", "text": prompt},
                     {"type": "image_url", "image_url": { "url": image_url }
-                     }  # Correct type: string
+                    }  # Correct type: string
                 ],
             },
         ]
