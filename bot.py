@@ -111,8 +111,13 @@ async def cmd_save(message: Message, state: FSMContext):
         await message.reply("❌ No photos uploaded.")
         return
 
+
     full_price = data.get("full_price")
     discounted_price = data.get("discounted_price")
+    if full_price is None:
+        await message.reply("❌ Please send the price first before saving. ex: 343/456")
+        return
+
     gender = data.get("gender", "M")
     categories = CONTROLLED_LISTS["category"]["Women"] if gender == "F" else CONTROLLED_LISTS["category"]["Men"]
 
