@@ -66,7 +66,7 @@ def classify_item(image_url: str, controlled_lists: dict):
                 ai_result[key] = value if value in controlled_lists[key] else ""
             else:
                 ai_result[key] = value
-
+    print(ai_result)
     # Determine if review is needed
     needs_review = any([
         not ai_result["type"],
