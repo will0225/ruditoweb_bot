@@ -39,4 +39,4 @@ def upload_photo(item_id: str, file_bytes: bytes, index: int) -> str:
         f.write(file_bytes)
 
     # Return URL
-    return f"{BASE_URL}/uploads/{year}/{month}/{fname}"
+    return f"{BASE_URL}/{year}/{month}/{fname}"
