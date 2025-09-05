@@ -87,7 +87,7 @@ async def cmd_prices(message: Message, state: FSMContext):
     )
 
 # --- Status ---
-@dp.message(FSMContext, Command(commands=["status"]))
+@dp.message(Command(commands=["status"]))
 async def cmd_status(message: Message, state: FSMContext):
     data = await state.get_data()
     await message.reply(f"📝 Current data:\n{data}")
@@ -109,7 +109,7 @@ async def cmd_edit_price(message: Message, state: FSMContext):
 
 
 # --- Gender ---
-@dp.message(FSMContext, Command(commands=["gender"]))
+@dp.message(Command(commands=["gender"]))
 async def cmd_gender(message: Message, state: FSMContext):
     args = message.text.split(maxsplit=1)
     if len(args) < 2 or args[1].upper() not in ["M", "F", "K"]:
@@ -120,7 +120,7 @@ async def cmd_gender(message: Message, state: FSMContext):
 
 
 # --- Brand ---
-@dp.message(FSMContext, Command(commands=["brand"]))
+@dp.message(Command(commands=["brand"]))
 async def cmd_brand(message: Message, state: FSMContext):
     args = message.text.split(maxsplit=1)
     brand = args[1].strip() if len(args) > 1 else ""
@@ -129,14 +129,12 @@ async def cmd_brand(message: Message, state: FSMContext):
 
 
 # --- Supplier ---
-@dp.message(FSMContext, Command(commands=["supplier"]))
+@dp.message(Command(commands=["supplier"]))
 async def cmd_supplier(message: Message, state: FSMContext):
     args = message.text.split(maxsplit=1)
     supplier = args[1].strip() if len(args) > 1 else ""
     await state.update_data(supplier=supplier)
     await message.reply(f"✅ Supplier set to '{supplier}'")
-
-
 
 # --- Save item ---
 @dp.message(NewItemStates.waiting_prices, Text(text="save", ignore_case=True))
