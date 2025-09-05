@@ -25,16 +25,18 @@ def upload_photo_supabase(item_id: str, file_bytes, index: int) -> str:
 
 
 def upload_photo(item_id: str, file_bytes: bytes, index: int) -> str:
-    # Ensure directory exists
-    os.makedirs(UPLOAD_PATH, exist_ok=True)
-
-    # Filename
-    fname = f"{item_id}_{index}_{datetime.utcnow().timestamp()}.jpg"
-    fpath = os.path.join(UPLOAD_PATH, fname)
+    # Create folder by year/month
+    now = datetime.utcnow()
+    year = now.strftime("%Y")
+    month = now.strftime("%m")
+    folder = os.path.join(UPLOAD_PATH, year, month)
+    os.makedirs(folder, exist_ok=True)
 
     # Save file
-    with open(fpath, "wb") as f:
+    fname = f"{item_id}_{index}.jpg"
+    path = os.path.join(folder, fname)
+    with open(path, "wb") as f:
         f.write(file_bytes)
 
-    # Public URL
-    return f"{BASE_URL}/{fname}"
+    # Return URL
+    return f"{BASE_URL}/uploads/{year}/{month}/{fname}"
