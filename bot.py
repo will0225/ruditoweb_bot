@@ -86,6 +86,57 @@ async def cmd_prices(message: Message, state: FSMContext):
         parse_mode="Markdown"
     )
 
+# --- Status ---
+@dp.message(FSMContext, Command(commands=["status"]))
+async def cmd_status(message: Message, state: FSMContext):
+    data = await state.get_data()
+    await message.reply(f"📝 Current data:\n{data}")
+
+
+# --- Edit price ---
+@dp.message(NewItemStates.waiting_prices, Command(commands=["edit_price"]))
+async def cmd_edit_price(message: Message, state: FSMContext):
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2:
+        await message.reply("Usage: /edit_price <full>/<discounted>")
+        return
+    try:
+        full_price, discounted_price = parse_prices(args[1])
+        await state.update_data(full_price=full_price, discounted_price=discounted_price)
+        await message.reply(f"✅ Price updated: Full={full_price}, Discounted={discounted_price}")
+    except Exception:
+        await message.reply("❌ Invalid price format. Example: 750/1000")
+
+
+# --- Gender ---
+@dp.message(FSMContext, Command(commands=["gender"]))
+async def cmd_gender(message: Message, state: FSMContext):
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2 or args[1].upper() not in ["M", "F", "K"]:
+        await message.reply("Usage: /gender M|F|K")
+        return
+    await state.update_data(gender=args[1].upper())
+    await message.reply(f"✅ Gender set to {args[1].upper()}")
+
+
+# --- Brand ---
+@dp.message(FSMContext, Command(commands=["brand"]))
+async def cmd_brand(message: Message, state: FSMContext):
+    args = message.text.split(maxsplit=1)
+    brand = args[1].strip() if len(args) > 1 else ""
+    await state.update_data(brand=brand)
+    await message.reply(f"✅ Brand set to '{brand}'")
+
+
+# --- Supplier ---
+@dp.message(FSMContext, Command(commands=["supplier"]))
+async def cmd_supplier(message: Message, state: FSMContext):
+    args = message.text.split(maxsplit=1)
+    supplier = args[1].strip() if len(args) > 1 else ""
+    await state.update_data(supplier=supplier)
+    await message.reply(f"✅ Supplier set to '{supplier}'")
+
+
 
 # --- Save item ---
 @dp.message(NewItemStates.waiting_prices, Text(text="save", ignore_case=True))
@@ -121,7 +172,9 @@ async def cmd_save(message: Message, state: FSMContext):
     worksheet.append_row(row, table_range="A:A", value_input_option='USER_ENTERED')
     await message.reply(f"✅ Item {data['item_id']} saved successfully.\nMain Photo URL: {photos[0]}")
     await state.clear()
-    
+
+
+  
 @dp.message(NewItemStates.waiting_photos)
 async def handle_product_id(message: Message, state: FSMContext):
     data = await state.get_data()
