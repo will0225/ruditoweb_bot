@@ -86,6 +86,42 @@ async def cmd_prices(message: Message, state: FSMContext):
         parse_mode="Markdown"
     )
 
+# --- Save item ---
+@dp.message(NewItemStates.waiting_prices, Text(text="save", ignore_case=True))
+async def cmd_save(message: Message, state: FSMContext):
+    data = await state.get_data()
+    photos = data.get("photos", [])
+    if not photos:
+        await message.reply("❌ No photos uploaded.")
+        return
+
+    full_price = data.get("full_price")
+    discounted_price = data.get("discounted_price")
+
+    ai_result, needs_review = classify_item(photos[0], CONTROLLED_LISTS)
+
+    row = [
+        data["item_id"],                # A
+        photos[0],                      # B
+        ",".join(photos[1:]),           # C
+        ai_result["title"],             # D
+        ai_result["description"],       # E
+        ai_result["type"],              # F
+        ai_result["category"],          # G
+        ai_result["color"],             # H
+        data.get("gender", "M"),        # I
+        ai_result["brand"] or "",       # J
+        "",                              # K
+        full_price,                     # L
+        discounted_price,               # M
+        "TRUE" if needs_review else "FALSE"  # N
+    ]
+
+    worksheet.append_row(row, table_range="A:A", value_input_option='USER_ENTERED')
+    await message.reply(f"✅ Item {data['item_id']} saved successfully.\nMain Photo URL: {photos[0]}")
+    await state.clear()
+
+
 # --- Status ---
 @dp.message(Command(commands=["status"]))
 async def cmd_status(message: Message, state: FSMContext):
@@ -135,41 +171,6 @@ async def cmd_supplier(message: Message, state: FSMContext):
     supplier = args[1].strip() if len(args) > 1 else ""
     await state.update_data(supplier=supplier)
     await message.reply(f"✅ Supplier set to '{supplier}'")
-
-# --- Save item ---
-@dp.message(NewItemStates.waiting_prices, Text(text="save", ignore_case=True))
-async def cmd_save(message: Message, state: FSMContext):
-    data = await state.get_data()
-    photos = data.get("photos", [])
-    if not photos:
-        await message.reply("❌ No photos uploaded.")
-        return
-
-    full_price = data.get("full_price")
-    discounted_price = data.get("discounted_price")
-
-    ai_result, needs_review = classify_item(photos[0], CONTROLLED_LISTS)
-
-    row = [
-        data["item_id"],                # A
-        photos[0],                      # B
-        ",".join(photos[1:]),           # C
-        ai_result["title"],             # D
-        ai_result["description"],       # E
-        ai_result["type"],              # F
-        ai_result["category"],          # G
-        ai_result["color"],             # H
-        data.get("gender", "M"),        # I
-        ai_result["brand"] or "",       # J
-        "",                              # K
-        full_price,                     # L
-        discounted_price,               # M
-        "TRUE" if needs_review else "FALSE"  # N
-    ]
-
-    worksheet.append_row(row, table_range="A:A", value_input_option='USER_ENTERED')
-    await message.reply(f"✅ Item {data['item_id']} saved successfully.\nMain Photo URL: {photos[0]}")
-    await state.clear()
 
 
   
