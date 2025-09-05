@@ -116,7 +116,12 @@ async def cmd_save(message: Message, state: FSMContext):
     gender = data.get("gender", "M")
     categories = CONTROLLED_LISTS["category"]["Women"] if gender == "F" else CONTROLLED_LISTS["category"]["Men"]
 
-    ai_result, needs_review = classify_item(photos[0], CONTROLLED_LISTS)
+    ai_result, needs_review = classify_item(photos[0], {
+        "type": CONTROLLED_LISTS["type"],
+        "category": categories,
+        "color": CONTROLLED_LISTS["color"],
+        "brand": CONTROLLED_LISTS["brand"],
+    })
 
     row = [
         data["item_id"],                # A
@@ -127,7 +132,7 @@ async def cmd_save(message: Message, state: FSMContext):
         data.get("gender", "M"),        # I
         ai_result["brand"] or data.get("brand", ""),       # J
         data.get("supplier", ""), 
-        ai_result["category"] or categories,          # G
+        ai_result["category"],          # G
         ai_result["color"],             # H
         ai_result["title"],             # D
         ai_result["description"],       # E
