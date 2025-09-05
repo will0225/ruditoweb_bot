@@ -106,8 +106,13 @@ async def cmd_prices(message: Message, state: FSMContext):
     if not data.get("photos"):
         await message.reply("❌ You need to upload at least 1 photo before adding prices.")
         return
+
+    # Switch state to waiting_prices
     await state.set_state(NewItemStates.waiting_prices)
-    await message.reply("💰 Send prices in format: `750/1000`, `750`, or `-25%`", parse_mode="Markdown")
+    await message.reply(
+        "💰 Send prices in format: `750/1000`, `750`, or `-25%`",
+        parse_mode="Markdown"
+    )
 
 # --- Handle price input ---
 @dp.message(NewItemStates.waiting_prices)
