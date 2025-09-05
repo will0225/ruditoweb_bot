@@ -27,10 +27,26 @@ SHEET_ID = os.getenv("SHEET_ID")
 
 CONTROLLED_LISTS = {
     "type": ["Shoes", "Clothes", "Bags"],
-    "category": ["Men", "Women", "Kids"],
     "color": ["Red", "Blue", "Green"],
-    "brand": ["Nike", "Adidas", "Puma"]
+    "brand": ["Nike", "Adidas", "Puma"],
+    "category": {
+        "Women": [
+            "All",
+            "Bags / Backpacks Women / Bags Women / Suitcases",
+            "Accessories / Belts Women / Scarves Women / Gloves Women / Hats Women / Sunglasses Women / Glasses Women",
+            "Shoes / Boots Women / Sneakers Women / Shoes Women / Shoes Heels Women / Slippers and Sandals Women",
+            "Clothing / Coats Women / Jackets Women / Gilets Women / Dresses / Skirts / Jeans / Pants Women / Leggings Women / Shorts Women / Shirts Women / Bluse / Polo / Tops Women / T-Shirts Women / Sweatshirts Women / Sport Suits Women / Body Women / Underwear Women"
+        ],
+        "Men": [
+            "All",
+            "Bags / Backpacks Men / Bags Men / Suitcases",
+            "Accessories / Belts Men / Scarves Men / Gloves Men / Hats Men / Sunglasses Men",
+            "Shoes / Boots Men / Sneakers Men / Shoes Men / Slippers and Sandals Men",
+            "Clothing / Coats Men / Jackets Men / Classic Clothes Men / Gilets Men / Jeans Men / Pants Men / Shorts Men / Shirts Men / Polo Shirts Men / T-Shirts Men / Sweatshirts Men / Sport Suits Men"
+        ]
+    }
 }
+
 
 AUTHORIZED_USERS = [8067976030]  # Telegram IDs
 
@@ -97,6 +113,8 @@ async def cmd_save(message: Message, state: FSMContext):
 
     full_price = data.get("full_price")
     discounted_price = data.get("discounted_price")
+    gender = data.get("gender", "M")
+    categories = CONTROLLED_LISTS["category"]["Women"] if gender == "F" else CONTROLLED_LISTS["category"]["Men"]
 
     ai_result, needs_review = classify_item(photos[0], CONTROLLED_LISTS)
 
@@ -109,7 +127,7 @@ async def cmd_save(message: Message, state: FSMContext):
         data.get("gender", "M"),        # I
         ai_result["brand"] or data.get("brand", ""),       # J
         data.get("supplier", ""), 
-        ai_result["category"],          # G
+        ai_result["category"] or categories,          # G
         ai_result["color"],             # H
         ai_result["title"],             # D
         ai_result["description"],       # E
