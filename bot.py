@@ -104,16 +104,17 @@ async def cmd_save(message: Message, state: FSMContext):
         data["item_id"],                # A
         photos[0],                      # B
         ",".join(photos[1:]),           # C
+        discounted_price, 
+        full_price,  
+        data.get("gender", "M"),        # I
+        ai_result["brand"] or data.get("brand", ""),       # J
+        data.get("supplier", ""), 
+        ai_result["category"],          # G
+        ai_result["color"],             # H
         ai_result["title"],             # D
         ai_result["description"],       # E
         ai_result["type"],              # F
-        ai_result["category"],          # G
-        ai_result["color"],             # H
-        data.get("gender", "M"),        # I
-        ai_result["brand"] or "",       # J
         "",                              # K
-        full_price,                     # L
-        discounted_price,               # M
         "TRUE" if needs_review else "FALSE"  # N
     ]
 
