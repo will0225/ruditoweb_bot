@@ -110,6 +110,26 @@ async def handle_product_id(message: Message, state: FSMContext):
     if message.photo:
         await handle_photo(message, state)
 
+
+@dp.message(NewItemStates.waiting_photos, F.text)
+async def handle_custom_id(message: Message, state: FSMContext):
+    data = await state.get_data()
+
+    # If item_id not set yet
+    if not data.get("item_id"):
+        pid = message.text.strip()
+        if pid.lower() == "auto":
+            from datetime import datetime
+            from sequence import next_sequence
+            pid = f"{datetime.utcnow().year}-{next_sequence():04d}"
+
+        await state.update_data(item_id=pid)
+        await message.reply(
+            f"✅ Started new item with ID: {pid}\nNow send photos (first = main). When done, send /prices."
+        )
+        return
+    
+    
 @dp.message(NewItemStates.waiting_photos, F.photo)
 async def handle_photo(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -132,13 +152,16 @@ async def handle_photo(message: Message, state: FSMContext):
 
 
 # --- Switch to price input ---
-@dp.message(NewItemStates.waiting_photos, Command("prices"))
+@dp.message(NewItemStates.waiting_photos, Command(commands=["prices"]))
 async def cmd_prices(message: Message, state: FSMContext):
     data = await state.get_data()
-    if not data.get("item_id") or not data.get("photos"):
-        await message.reply("❌ You must first set product ID and upload at least 1 photo.")
+
+    # Ensure at least 1 photo is uploaded
+    if not data.get("photos"):
+        await message.reply("❌ You need to upload at least 1 photo before adding prices.")
         return
 
+    # Switch state to waiting_prices
     await state.set_state(NewItemStates.waiting_prices)
     await message.reply(
         "💰 Send prices in format: `750/1000`, `750`, or `-25%`",
