@@ -4,7 +4,7 @@ import asyncio
 from datetime import datetime
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message
-from aiogram.filters import Command
+from aiogram.filters import Command, Text
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
@@ -32,7 +32,7 @@ CONTROLLED_LISTS = {
     "brand": ["Nike", "Adidas", "Puma"]
 }
 
-AUTHORIZED_USERS = [8067976030]  # Telegram IDs
+AUTHORIZED_USERS = [8067976030]
 
 # ---------------- FSM ----------------
 class NewItemStates(StatesGroup):
@@ -82,8 +82,7 @@ async def handle_product_id(message: Message, state: FSMContext):
     await state.update_data(item_id=pid)
     await state.set_state(NewItemStates.waiting_photos)
     await message.reply(
-        f"✅ Started new item with ID: {pid}\n"
-        "Now send photos (first = main). When done, send /prices."
+        f"✅ Started new item with ID: {pid}\nNow send photos (first = main). When done, send /prices."
     )
 
 # Handle photo upload
@@ -94,7 +93,6 @@ async def handle_photo(message: Message, state: FSMContext):
 
     photo = message.photo[-1]
     file = await bot.get_file(photo.file_id)
-
     buf = BytesIO()
     await bot.download(file, buf)
     file_bytes = buf.getvalue()
@@ -115,19 +113,8 @@ async def cmd_prices(message: Message, state: FSMContext):
     await state.set_state(NewItemStates.waiting_prices)
     await message.reply("💰 Send prices like `750/1000`, `750`, or `-25%`.")
 
-# Handle price messages
-@dp.message(NewItemStates.waiting_prices)
-async def handle_prices(message: Message, state: FSMContext):
-    try:
-        full_price, discounted_price = parse_prices(message.text.strip())
-    except Exception:
-        full_price, discounted_price = None, None
-
-    await state.update_data(full_price=full_price, discounted_price=discounted_price)
-    await message.reply(f"✅ Price recorded: Full={full_price}, Discounted={discounted_price}. Send more or /save to finish.")
-
-# Save item
-@dp.message(NewItemStates.waiting_prices, Command(commands=["save"]))
+# ---------------- Save command (must be ABOVE generic text handler) ----------------
+@dp.message(NewItemStates.waiting_prices, Text(equals="save", ignore_case=True))
 async def cmd_save(message: Message, state: FSMContext):
     data = await state.get_data()
     photos = data.get("photos", [])
@@ -142,25 +129,36 @@ async def cmd_save(message: Message, state: FSMContext):
     ai_result, needs_review = classify_item(photos[0], CONTROLLED_LISTS)
 
     row = [
-        data["item_id"],                # A
-        photos[0],                      # B
-        ",".join(photos[1:]),           # C
-        ai_result["title"],             # D
-        ai_result["description"],       # E
-        ai_result["type"],              # F
-        ai_result["category"],          # G
-        ai_result["color"],             # H
-        data.get("gender", "M"),        # I
-        ai_result["brand"] or "",       # J
-        "",                              # K Supplier
-        full_price,                     # L
-        discounted_price,               # M
-        "TRUE" if needs_review else "FALSE"  # N
+        data["item_id"],
+        photos[0],
+        ",".join(photos[1:]),
+        ai_result["title"],
+        ai_result["description"],
+        ai_result["type"],
+        ai_result["category"],
+        ai_result["color"],
+        data.get("gender", "M"),
+        ai_result["brand"] or "",
+        "",  # Supplier
+        full_price,
+        discounted_price,
+        "TRUE" if needs_review else "FALSE"
     ]
 
     worksheet.append_row(row, value_input_option="USER_ENTERED")
-    await message.reply(f"✅ Item {data['item_id']} saved.\nMain Photo URL: {photos[0]}")
+    await message.reply(f"✅ Item {data['item_id']} saved successfully.\nMain Photo URL: {photos[0]}")
     await state.clear()
+
+# Handle price input
+@dp.message(NewItemStates.waiting_prices)
+async def handle_prices(message: Message, state: FSMContext):
+    try:
+        full_price, discounted_price = parse_prices(message.text.strip())
+    except Exception:
+        full_price, discounted_price = None, None
+
+    await state.update_data(full_price=full_price, discounted_price=discounted_price)
+    await message.reply(f"✅ Price recorded: Full={full_price}, Discounted={discounted_price}. Send more or type 'save' to finish.")
 
 # Cancel creation
 @dp.message(Command(commands=["cancel"]))
