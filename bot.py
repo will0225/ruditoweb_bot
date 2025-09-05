@@ -80,13 +80,34 @@ async def cmd_new(message: Message, state: FSMContext):
     #     await message.reply("Unauthorized.")
     #     return
 
-    seq = next_sequence()
-    item_id = f"{datetime.utcnow().year}-{seq:04d}"
-
-    await state.update_data(item_id=item_id, photos=[], gender='M', needs_review=False)
     await state.set_state(NewItemStates.waiting_photos)
-    await message.reply(f"Started new item. ID {item_id}. Send photos (first = main). When done send /prices.")
+    await state.update_data(photos=[], gender='M', needs_review=False)
 
+    await message.reply(
+        "🆔 Send your product ID to start, or type 'auto' to generate automatically."
+    )
+
+@dp.message(NewItemStates.waiting_photos)
+async def handle_product_id(message: Message, state: FSMContext):
+    data = await state.get_data()
+    if "item_id" not in data:
+        pid = message.text.strip()
+        if pid.lower() == "auto":
+            # auto-generate
+            from datetime import datetime
+            from sequence import next_sequence
+            seq = next_sequence()
+            pid = f"{datetime.utcnow().year}-{seq:04d}"
+
+        await state.update_data(item_id=pid)
+        await message.reply(
+            f"Started new item with ID: {pid}\nSend photos (first = main). When done, send /prices."
+        )
+        return
+
+    # if item_id already exists, this is a photo message
+    if message.photo:
+        await handle_photo(message, state)
 
 @dp.message(NewItemStates.waiting_photos, F.photo)
 async def handle_photo(message: Message, state: FSMContext):
