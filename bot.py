@@ -84,6 +84,21 @@ async def handle_product_id(message: Message, state: FSMContext):
     if message.photo:
         await handle_photo(message, state)
 
+@dp.message(NewItemStates.waiting_photos, Command(commands=["prices"]))
+async def cmd_prices(message: Message, state: FSMContext):
+    data = await state.get_data()
+    if not data.get("photos"):
+        await message.reply("❌ You need to upload at least 1 photo before adding prices.")
+        return
+
+    # Switch state to waiting_prices
+    await state.set_state(NewItemStates.waiting_prices)
+    await message.reply(
+        "💰 Send prices in format: `750/1000`, `750`, or `-25%`",
+        parse_mode="Markdown"
+    )
+
+
 @dp.message(NewItemStates.waiting_photos, F.photo)
 async def handle_photo(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -100,19 +115,6 @@ async def handle_photo(message: Message, state: FSMContext):
     await state.update_data(photos=photos)
     await message.reply(f"📸 Photo {len(photos)} uploaded. Send more or /prices to continue.")
 
-@dp.message(NewItemStates.waiting_photos, Command(commands=["prices"]))
-async def cmd_prices(message: Message, state: FSMContext):
-    data = await state.get_data()
-    if not data.get("photos"):
-        await message.reply("❌ You need to upload at least 1 photo before adding prices.")
-        return
-
-    # Switch state to waiting_prices
-    await state.set_state(NewItemStates.waiting_prices)
-    await message.reply(
-        "💰 Send prices in format: `750/1000`, `750`, or `-25%`",
-        parse_mode="Markdown"
-    )
 
 # --- Handle price input ---
 @dp.message(NewItemStates.waiting_prices)
