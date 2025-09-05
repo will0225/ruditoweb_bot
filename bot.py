@@ -87,7 +87,7 @@ async def cmd_prices(message: Message, state: FSMContext):
     )
 
 # --- Save item ---
-@dp.message(NewItemStates.waiting_prices, Text(text="save", ignore_case=True))
+@dp.message(NewItemStates.waiting_prices, Command("save"))
 async def cmd_save(message: Message, state: FSMContext):
     data = await state.get_data()
     photos = data.get("photos", [])
