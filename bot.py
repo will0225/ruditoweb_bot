@@ -98,6 +98,17 @@ async def cmd_prices(message: Message, state: FSMContext):
         parse_mode="Markdown"
     )
 
+# --- Handle price input ---
+@dp.message(NewItemStates.waiting_prices)
+async def handle_prices(message: Message, state: FSMContext):
+    text = message.text.strip()
+    try:
+        full_price, discounted_price = parse_prices(text)
+    except Exception:
+        full_price, discounted_price = None, None
+    await state.update_data(full_price=full_price, discounted_price=discounted_price)
+    await message.reply(f"✅ Price recorded: Full={full_price}, Discounted={discounted_price}. Send more or type 'save' to finish.")
+
 
 @dp.message(NewItemStates.waiting_photos, F.photo)
 async def handle_photo(message: Message, state: FSMContext):
@@ -116,16 +127,6 @@ async def handle_photo(message: Message, state: FSMContext):
     await message.reply(f"📸 Photo {len(photos)} uploaded. Send more or /prices to continue.")
 
 
-# --- Handle price input ---
-@dp.message(NewItemStates.waiting_prices)
-async def handle_prices(message: Message, state: FSMContext):
-    text = message.text.strip()
-    try:
-        full_price, discounted_price = parse_prices(text)
-    except Exception:
-        full_price, discounted_price = None, None
-    await state.update_data(full_price=full_price, discounted_price=discounted_price)
-    await message.reply(f"✅ Price recorded: Full={full_price}, Discounted={discounted_price}. Send more or type 'save' to finish.")
 
 # --- Save item ---
 @dp.message(NewItemStates.waiting_prices, Text(text="save", ignore_case=True))
