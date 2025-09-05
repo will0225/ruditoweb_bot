@@ -23,6 +23,21 @@ def classify_item(image_url: str, controlled_lists: dict):
         "Rules:\n"
         "- Respond ONLY with JSON (no markdown, no code fences, no explanations).\n"
         "- 'title' and 'description' must always be filled.\n"
+        "_ 'category' must choose from the below list. \n"
+        " Women:"
+            'All'
+            'Bags / Backpacks Women / Bags Women / Suitcases'
+            'Accessories / Belts Women / Scarves Women / Gloves Women / Hats Women / Sunglasses Women / Glasses Women'
+            'Shoes / Boots Women / Sneakers Women / Shoes Women / Shoes Heels Women / Slippers and Sandals Women'
+            'Clothing / Coats Women / Jackets Women / Gilets Women / Dresses / Skirts / Jeans / Pants Women / Leggings Women / Shorts Women / Shirts Women / Bluse / Polo / Tops Women / T-Shirts Women / Sweatshirts Women / Sport Suits Women / Body Women / Underwear Women'
+
+        "Men:"
+            'All'
+            'Bags / Backpacks Men / Bags Men / Suitcases'
+            'Accessories / Belts Men / Scarves Men / Gloves Men / Hats Men / Sunglasses Men'
+            'Shoes / Boots Men / Sneakers Men / Shoes Men / Slippers and Sandals Men'
+            'Clothing / Coats Men / Jackets Men / Classic Clothes Men / Gilets Men / Jeans Men / Pants Men / Shorts Men / Shirts Men / Polo Shirts Men / T-Shirts Men / Sweatshirts Men / Sport Suits Men'
+        
         "- If unsure about 'brand', leave it empty.\n"
         "- For 'type', 'category', and 'color', provide your best guess (normalization will be applied later)."
     )
