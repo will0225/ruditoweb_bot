@@ -70,19 +70,7 @@ async def cmd_new(message: Message, state: FSMContext):
     await state.update_data(photos=[], gender='M', needs_review=False)
     await message.reply("🆔 Send your product ID to start, or type 'auto' to generate automatically.")
 
-@dp.message(NewItemStates.waiting_photos)
-async def handle_product_id(message: Message, state: FSMContext):
-    data = await state.get_data()
-    if not data.get("item_id"):
-        pid = message.text.strip()
-        if pid.lower() == "auto":
-            seq = next_sequence()
-            pid = f"{datetime.utcnow().year}-{seq:04d}"
-        await state.update_data(item_id=pid)
-        await message.reply(f"✅ Started new item with ID: {pid}\nSend photos (first = main). When done, send /prices.")
-        return
-    if message.photo:
-        await handle_photo(message, state)
+
 
 @dp.message(NewItemStates.waiting_photos, Command(commands=["prices"]))
 async def cmd_prices(message: Message, state: FSMContext):
@@ -98,6 +86,21 @@ async def cmd_prices(message: Message, state: FSMContext):
         parse_mode="Markdown"
     )
 
+@dp.message(NewItemStates.waiting_photos)
+async def handle_product_id(message: Message, state: FSMContext):
+    data = await state.get_data()
+    if not data.get("item_id"):
+        pid = message.text.strip()
+        if pid.lower() == "auto":
+            seq = next_sequence()
+            pid = f"{datetime.utcnow().year}-{seq:04d}"
+        await state.update_data(item_id=pid)
+        await message.reply(f"✅ Started new item with ID: {pid}\nSend photos (first = main). When done, send /prices.")
+        return
+    if message.photo:
+        await handle_photo(message, state)
+        
+        
 # --- Handle price input ---
 @dp.message(NewItemStates.waiting_prices)
 async def handle_prices(message: Message, state: FSMContext):
