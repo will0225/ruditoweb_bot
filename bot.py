@@ -3,6 +3,7 @@ from io import BytesIO
 import asyncio
 from datetime import datetime
 from aiogram import Bot, Dispatcher, F
+from aiogram.filters import Text
 from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.storage.memory import MemoryStorage
