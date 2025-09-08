@@ -142,6 +142,6 @@ def  getDescriptionByAI(brand: str, type: str, color: str, material: str, gender
         ]
     )
 
-    description_text = resp.choices[0].message["content"]
+    description_text = resp.choices[0].message.content
     
     return description_text
