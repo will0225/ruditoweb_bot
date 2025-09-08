@@ -74,8 +74,8 @@ def classify_item(image_url: str, controlled_lists: dict):
         }
 
     # Normalize type/category/color according to controlled lists
-    for key in ["type", "color", "brand"]:
-        if key in ["type", "color", "brand"]:
+    for key in ["type", "color"]:
+        if key in ["type", "color"]:
             value = ai_result.get(key, "").strip()
             if key in controlled_lists:
                 ai_result[key] = value if value in controlled_lists[key] else ""
