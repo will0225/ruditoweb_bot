@@ -79,12 +79,27 @@ gc = gspread.authorize(creds)
 sheet = gc.open_by_key(SHEET_ID)
 worksheet = sheet.sheet1
 
+# ---------------- FSM ----------------
+class NewItemStates(StatesGroup):
+    waiting_id_or_photo = State()
+    waiting_photos = State()
+    waiting_prices = State()
+
+
 # ---------------- HANDLERS ----------------
-@dp.message(Command(commands=["new"]))
-async def cmd_new(message: Message, state: FSMContext):
-    await state.set_state(NewItemStates.waiting_photos)
+@dp.message(Command(commands=["start"]))
+async def cmd_start(message: Message, state: FSMContext):
+    await state.clear()
+    await state.set_state(NewItemStates.waiting_id_or_photo)
     await state.update_data(photos=[], gender='M', needs_review=False)
-    await message.reply("🆔 Send your product ID to start, or type 'auto' to generate automatically.")
+    await message.reply(
+        "👋 Welcome!\n"
+        "Please send a product photo.\n\n"
+        "➡️ If you want to use your own Product ID, send it *before* sending the photo.\n"
+        "Otherwise, an ID will be generated automatically."
+    )
+
+
 
 
 
