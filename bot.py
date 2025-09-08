@@ -149,6 +149,7 @@ async def cmd_save(message: Message, state: FSMContext):
         data["item_id"],                # A
         photos[0],                      # B
         ",".join(photos[1:]),           # C
+        ai_result["description"],       # D
         discounted_price, 
         full_price,  
         data.get("gender", "M"),        # I
@@ -157,10 +158,10 @@ async def cmd_save(message: Message, state: FSMContext):
         ai_result["category"],          # G
         ai_result["color"],             # H
         ai_result["title"],             # D
-        ai_result["description"],       # E
         ai_result["type"],              # F
         "",                              # K
         data.get("size", "ALL SIZES AVAILABLE"),  # <-- NEW FIELD
+        data.get("material", "UNKNOWN"),  # <-- NEW FIELD
         "TRUE" if needs_review else "FALSE"  # N
     ]
 
@@ -228,6 +229,14 @@ async def cmd_size(message: Message, state: FSMContext):
     await state.update_data(size=size)
     await message.reply(f"✅ Size set to '{size}'")
 
+# --- Material ---
+@dp.message(Command(commands=["material"]))
+async def cmd_material(message: Message, state: FSMContext):
+    args = message.text.split(maxsplit=1)
+    material = args[1].strip() if len(args) > 1 else "UNKNOWN"
+    await state.update_data(material=material)
+    await message.reply(f"✅ Material set to '{material}'")
+    
 
 # --- If user sends custom ID first
 @dp.message(NewItemStates.waiting_id_or_photo, F.text)
