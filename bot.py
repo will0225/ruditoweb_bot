@@ -103,10 +103,12 @@ async def cmd_start(message: Message, state: FSMContext):
 
 
 
-@dp.message(NewItemStates.waiting_photos, Command(commands=["prices"]))
+@dp.message(Command(commands=["prices"]))
 async def cmd_prices(message: Message, state: FSMContext):
     data = await state.get_data()
-    if not data.get("photos"):
+    photos = data.get("photos", [])
+
+    if not photos:
         await message.reply("❌ You need to upload at least 1 photo before adding prices.")
         return
 
