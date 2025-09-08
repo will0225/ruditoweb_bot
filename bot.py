@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()  # will load variables from .env into environment
 from storage import upload_photo
 from sequence import next_sequence
-from ai_client import classify_item
+from ai_client import classify_item, getDescriptionByAI
 
 import gspread
 from google.oauth2.service_account import Credentials
@@ -145,11 +145,13 @@ async def cmd_save(message: Message, state: FSMContext):
         "brand": CONTROLLED_LISTS["brand"],
     })
 
+    description = getDescriptionByAI(ai_result["brand"], ai_result["type"], ai_result["color"],  data.get("material", "UNKNOWN"),  data.get("gender", "M"))
+    
     row = [
         data["item_id"],                # A
         photos[0],                      # B
         ",".join(photos[1:]),           # C
-        ai_result["description"],       # D
+        description or "",       # D
         discounted_price, 
         full_price,  
         data.get("gender", "M"),        # I

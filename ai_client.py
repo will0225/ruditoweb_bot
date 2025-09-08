@@ -23,27 +23,6 @@ def classify_item(image_url: str, controlled_lists: dict):
         "Rules:\n"
         "- Respond ONLY with JSON (no markdown, no code fences, no explanations).\n"
         "- 'title' and 'description' must always be filled.\n"
-        "-  For 'description', There must a rule.\n"  
-        
-        "Goal: From product photo(s) + a few fields, generate short, sales-ready copy in English. Input: photos (link/upload) + brand, item (type), color (+ optional: material, gender, notes). Output: TEXT ONLY (no JSON). EN + RU, each 1–2 sentences including “purchased in Italy / куплено в Италии”. Add 2–3 pairings per language; each pairing must include colors of the suggested pieces. Tone: concise, premium, factual. No emojis. No hype. Don’t invent facts. Use simple color names (black, white, beige, navy, ivory, light-blue, etc.). Role: e-commerce copywriter. Output text only.\n"
-
-        "Input:\n"
-        "brand=<...>; item=<...>; color=<...>; material=<opt>; gender=<opt>; notes=<opt>; purchased in Italy.\n"
-
-        "Task:\n"
-        "1) EN: 1–2 concise sentences including item, color, brand, and the phrase “purchased in Italy”.\n"
-        "2) Pairings EN: 2–3 bullets. Each bullet MUST include colors of pieces (e.g., beige trench, white tee, light-blue jeans).\n"
-
-        "Rules: no emojis, no hype, no invented facts; simple color names; max ~300 chars per language. \n"
-
-        "Return EXACTLY in this layout (no extra headings or text):\n"
-        
-        "<sentence(s)>\n"
-        "Pairings:\n"
-        "- <bullet 1>\n"
-        "- <bullet 2>\n"
-        "- <bullet 3 (opt)>\n"
-        
         "_ 'category' must choose from the below list. \n"
         " Women:"
             'All'
@@ -111,3 +90,58 @@ def classify_item(image_url: str, controlled_lists: dict):
     ])
 
     return ai_result, needs_review
+
+
+def  getDescriptionByAI(brand: str, type: str, color: str, material: str, gender: str):
+    
+    prompt = f"""
+        Role: e-commerce copywriter.
+
+        Goal: From product photo(s) + a few fields, generate short, sales-ready copy in English and Russian.
+        Tone: concise, premium, factual. No emojis. No hype. Don’t invent facts.
+        Use simple color names (black, white, beige, navy, ivory, light-blue, etc.).
+
+        Input:
+        brand={brand};
+        item={type};
+        color={color};
+        material={material};
+        gender={gender};
+        purchased in Italy.
+
+        Task:
+        1) EN: 1–2 concise sentences including item, color, brand, and the phrase “purchased in Italy”.
+        2) Pairings EN: 2–3 bullets. Each bullet MUST include colors of pieces (e.g., beige trench, white tee, light-blue jeans).
+        3) RU: 1–2 коротких предложения с типом, цветом, брендом и «куплено в Италии».
+        4) Сочетания RU: 2–3 пункта. В КАЖДОМ пункте явно указать цвета вещей.
+
+        Rules: no emojis, no hype, no invented facts; simple color names; max ~300 chars per language.
+
+        Return EXACTLY in this layout (no extra headings or text):
+
+        EN:
+        <sentence(s)>
+        Pairings:
+        - <bullet 1>
+        - <bullet 2>
+        - <bullet 3 (opt)>
+
+        RU:
+        <предложение(я)>
+        Сочетания:
+        - <пункт 1>
+        - <пункт 2>
+        - <пункт 3 (опц.)>
+    """
+
+    resp = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are an expert fashion e-commerce copywriter."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+
+    description_text = resp.choices[0].message["content"]
+    
+    return description_text
