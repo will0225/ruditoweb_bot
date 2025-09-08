@@ -160,6 +160,7 @@ async def cmd_save(message: Message, state: FSMContext):
         ai_result["description"],       # E
         ai_result["type"],              # F
         "",                              # K
+        data.get("size", "ALL SIZES AVAILABLE"),  # <-- NEW FIELD
         "TRUE" if needs_review else "FALSE"  # N
     ]
 
@@ -219,6 +220,13 @@ async def cmd_supplier(message: Message, state: FSMContext):
     await message.reply(f"✅ Supplier set to '{supplier}'")
 
 
+# --- Size ---
+@dp.message(Command(commands=["size"]))
+async def cmd_size(message: Message, state: FSMContext):
+    args = message.text.split(maxsplit=1)
+    size = args[1].strip() if len(args) > 1 else "ALL SIZES AVAILABLE"
+    await state.update_data(size=size)
+    await message.reply(f"✅ Size set to '{size}'")
 
 
 # --- If user sends custom ID first
