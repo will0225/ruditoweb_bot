@@ -92,7 +92,7 @@ def classify_item(image_url: str, controlled_lists: dict):
     return ai_result, needs_review
 
 
-def  getDescriptionByAI(brand: str, type: str, color: str, material: str, gender: str):
+def  getDescriptionByAI(title: str, brand: str, type: str, color: str, material: str, gender: str):
     
     prompt = f"""
         Role: e-commerce copywriter.
@@ -103,7 +103,7 @@ def  getDescriptionByAI(brand: str, type: str, color: str, material: str, gender
 
         Input:
         brand={brand};
-        item={type};
+        item={title};
         color={color};
         material={material};
         gender={gender};

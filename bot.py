@@ -145,7 +145,7 @@ async def cmd_save(message: Message, state: FSMContext):
         "brand": CONTROLLED_LISTS["brand"],
     })
 
-    description = getDescriptionByAI(ai_result["brand"], ai_result["type"], ai_result["color"],  data.get("material", "UNKNOWN"),  data.get("gender", "M"))
+    description = getDescriptionByAI(ai_result["title"], ai_result["brand"], ai_result["type"], ai_result["color"],  data.get("material", "UNKNOWN"),  data.get("gender", "M"))
     
     row = [
         data["item_id"],                # A
