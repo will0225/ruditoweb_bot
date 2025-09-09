@@ -282,16 +282,20 @@ async def process_first_photo(message: Message, state: FSMContext):
 @dp.message(NewItemStates.waiting_photos)
 async def handle_product_id(message: Message, state: FSMContext):
     data = await state.get_data()
-    if not data.get("item_id"):
+    if not data.get("item_id") and message.text:
         pid = message.text.strip()
         if pid.lower() == "auto":
             seq = next_sequence()
             pid = f"{datetime.utcnow().year}-{seq:04d}"
         await state.update_data(item_id=pid)
-        await message.reply(f"✅ Started new item with ID: {pid}\nSend photos (first = main). When done, send /prices.")
-        return
-    if message.photo:
+        await message.reply(
+            f"✅ Started new item with ID: {pid}\nSend photos (first = main). "
+            "When done, send /prices."
+        )
+    elif message.photo:  # ✅ always handle photos here
         await handle_photo(message, state)
+    else:
+        await message.reply("Please send a photo or type /prices when done.")
         
         
 # --- Handle price input ---
