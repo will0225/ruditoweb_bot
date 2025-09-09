@@ -94,6 +94,8 @@ def classify_item(image_url: str, controlled_lists: dict):
 
 def  getDescriptionByAI(title: str, brand: str, type: str, color: str, material: str, gender: str):
     
+    genderE = "Man" if gender == "M" else "Woman"
+    
     prompt = f"""
         Role: e-commerce copywriter.
 
@@ -106,7 +108,7 @@ def  getDescriptionByAI(title: str, brand: str, type: str, color: str, material:
         item={title};
         color={color};
         material={material};
-        gender={gender};
+        gender={genderE};
         purchased in Italy.
 
         Task:
