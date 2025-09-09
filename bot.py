@@ -279,23 +279,32 @@ async def process_first_photo(message: Message, state: FSMContext):
         parse_mode="Markdown"
     )
   
+# --- Handle product ID and photos ---
 @dp.message(NewItemStates.waiting_photos)
-async def handle_product_id(message: Message, state: FSMContext):
+async def handle_product_id_or_photo(message: Message, state: FSMContext):
     data = await state.get_data()
+
+    # If no product ID yet and user typed text → treat it as product ID
     if not data.get("item_id") and message.text:
         pid = message.text.strip()
         if pid.lower() == "auto":
             seq = next_sequence()
             pid = f"{datetime.utcnow().year}-{seq:04d}"
+
         await state.update_data(item_id=pid)
         await message.reply(
-            f"✅ Started new item with ID: {pid}\nSend photos (first = main). "
-            "When done, send /prices."
+            f"✅ Started new item with ID: {pid}\n"
+            f"Now send product photos (first = main). When done, send /prices."
         )
-    elif message.photo:  # ✅ always handle photos here
+        return
+
+    # If photo message → handle as photo upload
+    if message.photo:
         await handle_photo(message, state)
-    else:
-        await message.reply("Please send a photo or type /prices when done.")
+        return
+
+    # Fallback for invalid input
+    await message.reply("❌ Please send a photo or type /prices when done.")
         
         
 # --- Handle price input ---
@@ -310,21 +319,28 @@ async def handle_prices(message: Message, state: FSMContext):
     await message.reply(f"✅ Price recorded: Full={full_price}, Discounted={discounted_price}. Send more or type 'save' to finish.")
 
 
+# --- Handle photo upload (works for multiple photos) ---
 @dp.message(NewItemStates.waiting_photos, F.photo)
 async def handle_photo(message: Message, state: FSMContext):
     data = await state.get_data()
     photos = data.get("photos", [])
 
+    # Download photo
     photo = message.photo[-1]
     file = await bot.get_file(photo.file_id)
     buf = BytesIO()
     await bot.download(file, buf)
     file_bytes = buf.getvalue()
 
-    url = upload_photo(data["item_id"], file_bytes, len(photos)+1)
+    # Upload and save URL
+    url = upload_photo(data["item_id"], file_bytes, len(photos) + 1)
     photos.append(url)
     await state.update_data(photos=photos)
-    await message.reply(f"📸 Photo {len(photos)} uploaded. Send more or /prices to continue.")
+
+    await message.reply(
+        f"📸 Photo {len(photos)} uploaded. "
+        f"Send more photos or type /prices to continue."
+    )
 
 
 @dp.message(Command(commands=["cancel"]))
