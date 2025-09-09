@@ -280,7 +280,7 @@ async def process_first_photo(message: Message, state: FSMContext):
     )
   
 # --- Handle product ID and photos ---
-@dp.message(NewItemStates.waiting_photos)
+@dp.message(NewItemStates.waiting_photos, F.text)
 async def handle_product_id_or_photo(message: Message, state: FSMContext):
     data = await state.get_data()
 
