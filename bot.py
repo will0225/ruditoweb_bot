@@ -271,11 +271,13 @@ async def process_first_photo(message: Message, state: FSMContext):
     url = upload_photo(pid, buf.getvalue(), 1)
     photos.append(url)
 
+    # Save photos and switch to waiting_photos (not waiting_prices!)
     await state.update_data(photos=photos)
-    await state.set_state(NewItemStates.waiting_prices)
+    await state.set_state(NewItemStates.waiting_photos)
 
     await message.reply(
-        f"📸 First photo uploaded for item `{pid}`.\nNow set the price using /prices.",
+        f"📸 First photo uploaded for item `{pid}`.\n"
+        f"Send more photos, or when done, type /prices.",
         parse_mode="Markdown"
     )
   
