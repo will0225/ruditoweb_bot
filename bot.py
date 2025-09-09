@@ -253,31 +253,31 @@ async def process_custom_id(message: Message, state: FSMContext):
     await message.reply(f"✅ Using product ID: {pid}\nNow please upload a photo.")
 
 
-# # --- If user skips ID and sends photo directly
-# @dp.message(NewItemStates.waiting_id_or_photo, F.photo)
-# async def process_first_photo(message: Message, state: FSMContext):
-#     data = await state.get_data()
-#     pid = data.get("item_id")
-#     if not pid:  # auto-generate if missing
-#         seq = next_sequence()
-#         pid = f"{datetime.utcnow().year}-{seq:04d}"
-#         await state.update_data(item_id=pid)
+# --- If user skips ID and sends photo directly
+@dp.message(NewItemStates.waiting_id_or_photo, F.photo)
+async def process_first_photo(message: Message, state: FSMContext):
+    data = await state.get_data()
+    pid = data.get("item_id")
+    if not pid:  # auto-generate if missing
+        seq = next_sequence()
+        pid = f"{datetime.utcnow().year}-{seq:04d}"
+        await state.update_data(item_id=pid)
 
-#     photos = []
-#     photo = message.photo[-1]
-#     file = await bot.get_file(photo.file_id)
-#     buf = BytesIO()
-#     await bot.download(file, buf)
-#     url = upload_photo(pid, buf.getvalue(), 1)
-#     photos.append(url)
+    photos = []
+    photo = message.photo[-1]
+    file = await bot.get_file(photo.file_id)
+    buf = BytesIO()
+    await bot.download(file, buf)
+    url = upload_photo(pid, buf.getvalue(), 1)
+    photos.append(url)
 
-#     await state.update_data(photos=photos)
-#     await state.set_state(NewItemStates.waiting_prices)
+    await state.update_data(photos=photos)
+    await state.set_state(NewItemStates.waiting_prices)
 
-#     await message.reply(
-#         f"📸 First photo uploaded for item `{pid}`.\nNow set the price using /prices.",
-#         parse_mode="Markdown"
-#     )
+    await message.reply(
+        f"📸 First photo uploaded for item `{pid}`.\nNow set the price using /prices.",
+        parse_mode="Markdown"
+    )
   
 # --- Handle product ID and photos ---
 @dp.message(NewItemStates.waiting_photos)
