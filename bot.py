@@ -79,6 +79,20 @@ gc = gspread.authorize(creds)
 sheet = gc.open_by_key(SHEET_ID)
 worksheet = sheet.sheet1
 
+
+from aiogram import BaseMiddleware
+from aiogram.types import Message
+
+MAINTENANCE = true
+class MaintenanceMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event: Message, data: dict):
+        if MAINTENANCE:
+            await event.answer("🚧 Hello, This is Nikola, can you contact to me? This is my whatsappnumber. +381658605211.")
+            return  # block normal handling
+        return await handler(event, data)
+
+dp.message.middleware(MaintenanceMiddleware())
+
 # ---------------- FSM ----------------
 class NewItemStates(StatesGroup):
     waiting_id_or_photo = State()
