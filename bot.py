@@ -107,7 +107,7 @@ async def cmd_start(message: Message, state: FSMContext):
     await state.set_state(NewItemStates.waiting_id_or_photo)
     await state.update_data(photos=[], gender='M', needs_review=False)
     await message.reply(
-        "Hello, This is Nikola, can you contact to me? This is my whatsappnumber. +381658605211 👋 Welcome!\n"
+        "Hello, This is Nikola, can you contact to me? This is my whatsappnumber. +381658605211  or my telegram https://t.me/tingyang0225👋 Welcome!\n"
         "Please send a product photo.\n\n"
         "➡️ If you want to use your own Product ID, send it *before* sending the photo.\n"
         "Otherwise, an ID will be generated automatically."
