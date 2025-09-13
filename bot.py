@@ -186,7 +186,7 @@ async def cmd_save(message: Message, state: FSMContext):
     
     
     # ------------------ NEW CODE: post to channel ------------------
-    CHANNEL_ID = "tshirts_knitwear_buyer"   # 👈 replace with your channel ID
+    CHANNEL_ID = "-1002497983736"   # 👈 replace with your channel ID
     mens_tops = ["t-shirt", "polo", "sweatshirt", "hoodie", "sweater", "cardigan"]
 
     if gender.upper() == "M":
@@ -196,7 +196,7 @@ async def cmd_save(message: Message, state: FSMContext):
             caption = f"{ai_result['brand']} {ai_result['type']}\n💰 {price_text}"
             try:
                 await bot.send_photo(CHANNEL_ID, photos[0], caption=caption)
-                await new_bot.send_photo(CHANNEL_ID, photos[0], caption=caption)
+                # await new_bot.send_photo(CHANNEL_ID, photos[0], caption=caption)
             except Exception as e:
                 await message.reply(f"⚠️ Failed to post to channel: {e}")
     # ---------------------------------------------------------------
