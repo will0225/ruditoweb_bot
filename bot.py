@@ -183,6 +183,23 @@ async def cmd_save(message: Message, state: FSMContext):
 
     worksheet.append_row(row, table_range="A:A", value_input_option='USER_ENTERED')
     await message.reply(f"✅ Item {data['item_id']} saved successfully.\nMain Photo URL: {photos[0]}")
+    
+    
+    # ------------------ NEW CODE: post to channel ------------------
+    CHANNEL_ID = "@tshirtrudibot"   # 👈 replace with your channel ID
+    mens_tops = ["t-shirt", "polo", "sweatshirt", "hoodie", "sweater", "cardigan"]
+
+    if gender.upper() == "M":
+        item_type = (ai_result["type"] or "").lower()
+        if "sneakers" in item_type or any(k in item_type for k in mens_tops):
+            price_text = f"{discounted_price} €" if discounted_price else f"{full_price} €"
+            caption = f"{ai_result['brand']} {ai_result['type']}\n💰 {price_text}"
+            try:
+                await bot.send_photo(CHANNEL_ID, photos[0], caption=caption)
+            except Exception as e:
+                await message.reply(f"⚠️ Failed to post to channel: {e}")
+    # ---------------------------------------------------------------
+    
     await state.clear()
 
 
