@@ -186,7 +186,7 @@ async def cmd_save(message: Message, state: FSMContext):
     
     
     # ------------------ NEW CODE: post to channel ------------------
-    CHANNEL_ID = "@testing_channel"   # 👈 replace with your channel ID
+    CHANNEL_ID = "-1002497983736"   # 👈 replace with your channel ID
     mens_tops = ["t-shirt", "polo", "sweatshirt", "hoodie", "sweater", "cardigan"]
     await bot.send_photo(CHANNEL_ID, photos[0], caption=caption)
     if gender.upper() == "M":
