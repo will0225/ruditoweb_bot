@@ -186,20 +186,20 @@ async def cmd_save(message: Message, state: FSMContext):
     
     
     # ------------------ NEW CODE: post to channel ------------------
-    CHANNEL_ID = "-1002497983736"   # 👈 replace with your channel ID
+    CHANNEL_ID = "@testing_channel"   # 👈 replace with your channel ID
     mens_tops = ["t-shirt", "polo", "sweatshirt", "hoodie", "sweater", "cardigan"]
-    await bot.send_photo(CHANNEL_ID, photos[0], caption=caption)
-    if gender.upper() == "M":
-        item_type = (ai_result["type"] or "").lower()
-        if "sneakers" in item_type or any(k in item_type for k in mens_tops):
-            price_text = f"{discounted_price} €" if discounted_price else f"{full_price} €"
-            caption = f"{ai_result['brand']} {ai_result['type']}\n💰 {price_text}"
-            try:
-                await bot.send_photo(CHANNEL_ID, photos[0], caption=caption)
-                # await new_bot.send_photo(CHANNEL_ID, photos[0], caption=caption)
-            except Exception as e:
-                await message.reply(f"⚠️ Failed to post to channel: {e}")
-    # ---------------------------------------------------------------
+    await bot.send_message(CHANNEL_ID, "✅ Hello, this is a test message from my bot!")
+    # if gender.upper() == "M":
+    #     item_type = (ai_result["type"] or "").lower()
+    #     if "sneakers" in item_type or any(k in item_type for k in mens_tops):
+    #         price_text = f"{discounted_price} €" if discounted_price else f"{full_price} €"
+    #         caption = f"{ai_result['brand']} {ai_result['type']}\n💰 {price_text}"
+    #         try:
+    #             await bot.send_photo(CHANNEL_ID, photos[0], caption=caption)
+    #             # await new_bot.send_photo(CHANNEL_ID, photos[0], caption=caption)
+    #         except Exception as e:
+    #             await message.reply(f"⚠️ Failed to post to channel: {e}")
+    # # ---------------------------------------------------------------
     
     await state.clear()
 
