@@ -136,6 +136,9 @@ async def cmd_prices(message: Message, state: FSMContext):
 # --- Save item ---
 @dp.message(NewItemStates.waiting_prices, Command("save"))
 async def cmd_save(message: Message, state: FSMContext):
+    CHANNEL_ID = "@testing_channel"   # 👈 replace with your channel ID
+    mens_tops = ["t-shirt", "polo", "sweatshirt", "hoodie", "sweater", "cardigan"]
+    await bot.send_message(CHANNEL_ID, "✅ Hello, this is a test message from my bot!")
     data = await state.get_data()
     photos = data.get("photos", [])
     if not photos:
@@ -186,9 +189,7 @@ async def cmd_save(message: Message, state: FSMContext):
     
     
     # ------------------ NEW CODE: post to channel ------------------
-    CHANNEL_ID = "@testing_channel"   # 👈 replace with your channel ID
-    mens_tops = ["t-shirt", "polo", "sweatshirt", "hoodie", "sweater", "cardigan"]
-    await bot.send_message(CHANNEL_ID, "✅ Hello, this is a test message from my bot!")
+   
     # if gender.upper() == "M":
     #     item_type = (ai_result["type"] or "").lower()
     #     if "sneakers" in item_type or any(k in item_type for k in mens_tops):
