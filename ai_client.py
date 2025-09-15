@@ -74,13 +74,13 @@ def classify_item(image_url: str, controlled_lists: dict):
         }
 
     # Normalize type/category/color according to controlled lists
-    for key in ["type"]:
-        if key in ["type"]:
-            value = ai_result.get(key, "").strip()
-            if key in controlled_lists:
-                ai_result[key] = value if value in controlled_lists[key] else ""
-            else:
-                ai_result[key] = value
+    # for key in ["type"]:
+    #     if key in ["type"]:
+    #         value = ai_result.get(key, "").strip()
+    #         if key in controlled_lists:
+    #             ai_result[key] = value if value in controlled_lists[key] else ""
+    #         else:
+    #             ai_result[key] = value
     print(ai_result)
     # Determine if review is needed
     needs_review = any([
