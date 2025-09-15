@@ -183,7 +183,8 @@ async def cmd_save(message: Message, state: FSMContext):
     ]
 
     worksheet.append_row(row, table_range="A:A", value_input_option='USER_ENTERED')
-    await message.reply(f"✅ Item {data['item_id']} saved successfully.\nMain Photo URL: {photos[0]}")
+    # await message.reply(f"✅ Item {data['item_id']} saved successfully.\nMain Photo URL: {photos[0]}")
+     await message.reply(f"✅ Item {data['item_id']} saved successfully")
     
     
     # ------------------ NEW CODE: post to channel ------------------
