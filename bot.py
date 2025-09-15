@@ -189,7 +189,7 @@ async def cmd_save(message: Message, state: FSMContext):
     
     # ------------------ NEW CODE: post to channel ------------------
     CHANNEL_ID = "-1002497983736"   # 👈 replace with your channel ID
-    mens_tops = ["t-shirt", "polo", "sweatshirt", "hoodie", "sweater", "cardigan"]
+    mens_tops = ["t-shirt", "polo", "sweatshirt", "hoodie", "sweater", "cardigan", "shirt"]
 
     if gender.upper() == "M":
         item_type = (ai_result["type"] or "").lower()
