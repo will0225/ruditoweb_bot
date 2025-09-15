@@ -170,7 +170,7 @@ async def cmd_save(message: Message, state: FSMContext):
         discounted_price, 
         full_price,  
         data.get("gender", "M"),        # I
-        ai_result["brand"] or data.get("brand", ""),       # J
+        data.get("brand") or ai_result["brand"] ,       # J
         data.get("supplier", ""), 
         ai_result["category"],          # G
         ai_result["color"],             # H
@@ -195,7 +195,7 @@ async def cmd_save(message: Message, state: FSMContext):
         item_type = (ai_result["type"] or "").lower()
         if "sneakers" in item_type or any(k in item_type for k in mens_tops):
             price_text = f"{discounted_price} €" if discounted_price else f"{full_price} €"
-            caption = f"{ai_result['brand']} {ai_result['type']}\n💰 {price_text}"
+            caption = f"{data.get("brand") or ai_result["brand"]} {ai_result['type']}\n💰 {price_text}"
             try:
                 await bot.send_photo(CHANNEL_ID, photos[0], caption=caption)
                 # await new_bot.send_photo(CHANNEL_ID, photos[0], caption=caption)
